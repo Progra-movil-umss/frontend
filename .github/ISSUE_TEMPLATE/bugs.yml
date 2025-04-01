@@ -1,6 +1,6 @@
 name: Bug Report con formato
 description: Por favor, proporcione tantos detalles como sea posible para transmitir el historial de su problema.
-labels: [ "Bug" ]
+labels: [ "bug" ]
 body:
   - type: dropdown
     id: severity
