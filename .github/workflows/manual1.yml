@@ -7,7 +7,7 @@ jobs:
   add-to-project:
     name: Add bug to project
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'Bug'
+    if: github.event.label.name == 'bug'
     steps:
       - uses: actions/add-to-project@v0.4.0
         with:
