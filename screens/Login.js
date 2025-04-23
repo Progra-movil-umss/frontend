@@ -6,12 +6,17 @@ import Checkbox from '../components/Checkbox';
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
 
-const LoginScreen = ({ onRegister }) => {
+const Login = ({ onRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({});
   const [valid, setValid] = useState(false);
+  const [touched, setTouched] = useState({
+    username: false,
+    password: false,
+  });
+  
 
   useEffect(() => {
     const errs = {};
@@ -34,16 +39,22 @@ const LoginScreen = ({ onRegister }) => {
         label="Usuario"
         placeholder="Ingrese su usuario"
         value={username}
-        onChangeText={setUsername}
-        error={errors.username}
+        onChangeText={text => {
+            setUsername(text);
+            if (!touched.username) setTouched({ ...touched, username: true });
+        }}
+        error={touched.username ? errors.username : ''}
       />
       <CustomInput
         label="Contraseña"
         placeholder="Ingrese su contraseña"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={text => {
+            if (!touched.password) setTouched({ ...touched, password: true });
+            setPassword(text);
+        }}
         secureText
-        error={errors.password}
+        error={touched.password ? errors.password : ''}
       />
       <View style={styles.row}>        
         <Checkbox checked={remember} onToggle={() => setRemember((r) => !r)} />
@@ -71,7 +82,7 @@ const LoginScreen = ({ onRegister }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: 'bold', color: TITLE_COLOR, marginBottom: 24, textAlign: 'center' },
+  title: { fontSize: 32, fontWeight: 'bold', color: TITLE_COLOR, marginBottom: 24, textAlign: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   rememberText: { marginLeft: 8 },
   forgot: { color: '#2196F3', marginVertical: 12, textAlign: 'right' },
@@ -79,4 +90,4 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }
 });
 
-export default LoginScreen;
+export default Login;

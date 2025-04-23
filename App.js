@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import LoginScreen from './screens/LoginScreen';
-import RegisterScreen from './screens/RegisterScreen';
+import Login from './screens/Login';
+import Register from './screens/Register';
 
 export default function App() {
   const [showRegister, setShowRegister] = useState(false);
@@ -10,9 +10,9 @@ export default function App() {
     <>      
       <StatusBar style="dark" />
       {showRegister ? (
-        <RegisterScreen onBack={() => setShowRegister(false)} />
+        <Register onBack={() => setShowRegister(false)} />
       ) : (
-        <LoginScreen onRegister={() => setShowRegister(true)} />
+        <Login onRegister={() => setShowRegister(true)} />
       )}
     </>
   );

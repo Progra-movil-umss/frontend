@@ -5,13 +5,19 @@ import CustomInput from '../components/CustomInput';
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
 
-const RegisterScreen = ({ onBack }) => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [errors, setErrors] = useState({});
-  const [valid, setValid] = useState(false);
+const Register = ({ onBack }) => {
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirm, setConfirm] = useState('');
+    const [errors, setErrors] = useState({});
+    const [valid, setValid] = useState(false);
+    const [touched, setTouched] = useState({
+        username: false,
+        email: false,
+        password: false,
+        confirm: false,
+    });
 
   useEffect(() => {
     const errs = {};
@@ -38,32 +44,44 @@ const RegisterScreen = ({ onBack }) => {
         label="Nombre de usuario"
         placeholder="Ingrese su nombre de usuario"
         value={username}
-        onChangeText={setUsername}
-        error={errors.username}
+        onChangeText={text => {
+            setUsername(text);
+            if (!touched.username) setTouched({ ...touched, username: true });
+            }}
+        error={touched.username ? errors.username : ''}
       />
       <CustomInput
         label="Correo electronico"
         placeholder="Ingrese su correo electronico"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={text => {
+            setEmail(text);
+            if (!touched.email) setTouched({ ...touched, email: true });
+        }}
         keyboardType="email-address"
-        error={errors.email}
+        error={touched.email ? errors.email : ''}
       />
       <CustomInput
         label="Contraseña"
         placeholder="Ingrese su contraseña"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={text => {
+            setPassword(text);
+            if (!touched.password) setTouched({ ...touched, password: true });
+        }}
         secureText
-        error={errors.password}
+        error={touched.password ? errors.password : ''}
       />
       <CustomInput
         label="Confirmar contraseña"
         placeholder="Repita su contraseña"
         value={confirm}
-        onChangeText={setConfirm}
+        onChangeText={text => {
+                setConfirm(text);
+                if (!touched.confirm) setTouched({ ...touched, confirm: true });
+            }}
         secureText
-        error={errors.confirm}
+        error={touched.confirm ? errors.confirm : ''}
       />
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -90,4 +108,4 @@ const styles = StyleSheet.create({
   backLink: { alignItems: 'center', marginTop: 8 }
 });
 
-export default RegisterScreen;
+export default Register;
