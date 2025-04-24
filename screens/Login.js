@@ -1,3 +1,5 @@
+// screens/Login.js
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import CustomInput from '../components/CustomInput';
@@ -6,7 +8,7 @@ import Checkbox from '../components/Checkbox';
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
 
-const Login = ({ onRegister }) => {
+const Login = ({ navigation, onRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -16,7 +18,8 @@ const Login = ({ onRegister }) => {
     username: false,
     password: false,
   });
-  
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
     const errs = {};
@@ -26,50 +29,95 @@ const Login = ({ onRegister }) => {
     setValid(Object.keys(errs).length === 0);
   }, [username, password]);
 
-  const handleLogin = () => {
-    if (!valid) return;
-    // Aquí iría la llamada a la API
-    console.log({ username, password, remember });
+  const handleLogin = async () => {
+    setServerError('');
+    setLoading(true);
+    try {
+      const resp = await fetch(
+        'https://florafind-aau6a.ondigitalocean.app/auth/token',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username_or_email: username,
+            password,
+          }),
+        }
+      );
+      const data = await resp.json();
+      if (resp.status === 200) {
+        // redirige a Home y pasa el token
+        navigation.navigate('Home', {
+          accessToken: data.access_token,
+        });
+      } else {
+        // muestra errores del servidor (422 o similares)
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map(d => d.msg || JSON.stringify(d)).join('\n')
+          : JSON.stringify(data);
+        setServerError(detail);
+      }
+    } catch (e) {
+      setServerError('Error de red, inténtalo más tarde.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Inicio de Sesión</Text>
+
       <CustomInput
         label="Usuario"
         placeholder="Ingrese su usuario"
         value={username}
         onChangeText={text => {
-            setUsername(text);
-            if (!touched.username) setTouched({ ...touched, username: true });
+          setUsername(text);
+          if (!touched.username) setTouched({ ...touched, username: true });
         }}
         error={touched.username ? errors.username : ''}
       />
+
       <CustomInput
         label="Contraseña"
         placeholder="Ingrese su contraseña"
         value={password}
         onChangeText={text => {
-            if (!touched.password) setTouched({ ...touched, password: true });
-            setPassword(text);
+          setPassword(text);
+          if (!touched.password) setTouched({ ...touched, password: true });
         }}
         secureText
         error={touched.password ? errors.password : ''}
       />
-      <View style={styles.row}>        
-        <Checkbox checked={remember} onToggle={() => setRemember((r) => !r)} />
+
+      {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
+
+      <View style={styles.row}>
+        <Checkbox checked={remember} onToggle={() => setRemember(r => !r)} />
         <Text style={styles.rememberText}>Recordar contraseña</Text>
       </View>
+
       <TouchableOpacity>
         <Text style={styles.forgot}>Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
+
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: valid ? TITLE_COLOR : DISABLED_COLOR }]}
+        style={[
+          styles.button,
+          {
+            backgroundColor: valid ? TITLE_COLOR : DISABLED_COLOR,
+            opacity: loading ? 0.7 : 1,
+          },
+        ]}
         onPress={handleLogin}
-        disabled={!valid}
+        disabled={!valid || loading}
       >
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
+        <Text style={styles.buttonText}>
+          {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+        </Text>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.button, { backgroundColor: TITLE_COLOR }]}
         onPress={onRegister}
@@ -82,12 +130,19 @@ const Login = ({ onRegister }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, justifyContent: 'center' },
-  title: { fontSize: 32, fontWeight: 'bold', color: TITLE_COLOR, marginBottom: 24, textAlign: 'center' },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: TITLE_COLOR,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   rememberText: { marginLeft: 8 },
   forgot: { color: '#2196F3', marginVertical: 12, textAlign: 'right' },
   button: { paddingVertical: 14, borderRadius: 8, marginBottom: 12 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
+  error: { color: 'red', fontSize: 12, marginTop: 8 },
 });
 
 export default Login;
