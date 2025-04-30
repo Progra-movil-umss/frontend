@@ -6,7 +6,7 @@ import Checkbox from '../components/Checkbox';
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
 
-const Login = ({ onRegister }) => {
+const Login = ({ onRegister, onHome }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -28,8 +28,14 @@ const Login = ({ onRegister }) => {
 
   const handleLogin = () => {
     if (!valid) return;
+    if (onHome) {
+      console.log('Login exitoso, navegando a Home');
+      onHome();
+    }
     // Aquí iría la llamada a la API
     console.log({ username, password, remember });
+
+    
   };
 
   return (
@@ -76,6 +82,7 @@ const Login = ({ onRegister }) => {
       >
         <Text style={styles.buttonText}>Crear cuenta</Text>
       </TouchableOpacity>
+      
     </View>
   );
 };
