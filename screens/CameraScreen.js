@@ -56,14 +56,38 @@ export default function CameraScreen({onClose}) {
       setLastPhoto(newPhotos[0] || null);
     }
   };
-//
+
   const handleSendPhotos = async () => {
     if (photos.length === 0) {
       alert('No hay fotos para identificar');
       return;
     }
-    //Aca vendria la llamada a la API
-    console.log(photos);
+    const formData = new FormData();
+  photos.forEach((uri, index) => {
+    formData.append('images', {
+      uri: uri,
+      name: `image_${index}.jpg`,
+      type: 'image/jpeg',
+    });
+  });
+
+  try {
+    const response = await fetch('https://florafind-aau6a.ondigitalocean.app/Identify', {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer TU_TOKEN_AQUI",
+        "Content-Type": "multipart/form-data"
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+    console.log("Resultado de la identificación:", result);
+    alert(`Planta identificada: ${JSON.stringify(result)}`);
+  } catch (error) {
+    console.error("Error al enviar las imágenes:", error);
+    alert("Error al identificar la planta. Intenta de nuevo.");
+  }
   };
 
   return (
