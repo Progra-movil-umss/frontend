@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
+import Gardens from './screens/Gardens';
 
 const Stack = createNativeStackNavigator();
 
@@ -13,7 +14,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="Gardens">
         <Stack.Screen
           name="Login"
           component={Login}
@@ -32,6 +33,12 @@ export default function App() {
             headerLeft: () => null,
             gestureEnabled: false
           }}
+        />
+        
+        <Stack.Screen
+          name="Gardens"
+          component={Gardens}
+          options={{ title: 'Mis Jardines' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
