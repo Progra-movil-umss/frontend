@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Navbar from '../components/Navbar';
 
 const TITLE_COLOR = '#4CAF50';
 
@@ -12,6 +13,7 @@ const Home = ({ route }) => {
       <Text style={[styles.welcome, { fontSize: 14 }]} numberOfLines={1}>
         {accessToken}
       </Text>
+      <Navbar />
     </View>
   );
 };
