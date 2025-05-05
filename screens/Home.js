@@ -1,5 +1,3 @@
-// screens/Home.js
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
@@ -10,7 +8,10 @@ const Home = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>Bienvenido {accessToken}</Text>
+      <Text style={styles.welcome}>Bienvenido, tu token es:</Text>
+      <Text style={[styles.welcome, { fontSize: 14 }]} numberOfLines={1}>
+        {accessToken}
+      </Text>
     </View>
   );
 };
@@ -27,6 +28,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: TITLE_COLOR,
     textAlign: 'center',
+    marginBottom: 8,
   },
 });
 
