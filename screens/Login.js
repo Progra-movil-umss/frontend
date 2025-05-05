@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
 
-const Login = ({ onRegister }) => {
+const Login = () => {
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -56,11 +56,7 @@ const Login = ({ onRegister }) => {
 
       const text = await resp.text();
       let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = null;
-      }
+      try { data = JSON.parse(text); } catch { data = null; }
 
       if (!resp.ok) {
         const detail = Array.isArray(data?.detail)
@@ -69,7 +65,8 @@ const Login = ({ onRegister }) => {
         setModalMessage(detail);
         setModalVisible(true);
       } else {
-        navigation.navigate('Home', { accessToken: data.access_token });
+        // Navega a Home pasando el token
+        navigation.replace('Home', { accessToken: data.access_token });
       }
     } catch (e) {
       setModalMessage('Error de red, inténtalo más tarde.');
@@ -130,7 +127,7 @@ const Login = ({ onRegister }) => {
         <Text style={styles.rememberText}>Recordar contraseña</Text>
       </View>
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
         <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
 
@@ -152,7 +149,7 @@ const Login = ({ onRegister }) => {
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: TITLE_COLOR }]}
-        onPress={onRegister}
+        onPress={() => navigation.navigate('Register')}
       >
         <Text style={styles.buttonText}>Crear cuenta</Text>
       </TouchableOpacity>
