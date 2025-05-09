@@ -13,6 +13,7 @@ import Identify from './screens/Identify';
 import Garden from './screens/Garden';
 import Profile from './screens/Profile';
 
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
