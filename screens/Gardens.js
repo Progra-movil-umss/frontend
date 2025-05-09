@@ -19,7 +19,7 @@ const Gardens = ({ route, navigation }) => {
 
   const fetchGardens = async () => {
     try {
-      const response = await fetch('https://tu-api.com/gardens', {
+      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/gardens', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

@@ -7,6 +7,7 @@ import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
 import Gardens from './screens/Gardens';
+import CreateGarden from './screens/CreateGarden';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +40,11 @@ export default function App() {
           name="Gardens"
           component={Gardens}
           options={{ title: 'Mis Jardines' }}
+        />
+        <Stack.Screen
+          name="CreateGarden"
+          component={CreateGarden}
+          options={{ title: 'Crear Jardín' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

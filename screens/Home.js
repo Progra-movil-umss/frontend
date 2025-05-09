@@ -1,11 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Navbar from '../components/Navbar';
-
-const TITLE_COLOR = '#4CAF50';
+import Navbar from '../components/Navbar'; // Importa el componente Navbar
 
 const Home = ({ route }) => {
-  const { accessToken } = route.params;
+  const { accessToken } = route.params || {}; // Obtén el accessToken de los parámetros de navegación
 
   return (
     <View style={styles.container}>
@@ -13,7 +11,9 @@ const Home = ({ route }) => {
       <Text style={[styles.welcome, { fontSize: 14 }]} numberOfLines={1}>
         {accessToken}
       </Text>
-      <Navbar />
+
+      {/* Pasa el accessToken al Navbar */}
+      <Navbar accessToken={accessToken} />
     </View>
   );
 };
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   welcome: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: TITLE_COLOR,
+    color: '#4CAF50',
     textAlign: 'center',
     marginBottom: 8,
   },
