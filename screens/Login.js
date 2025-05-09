@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  Pressable,
-  ActivityIndicator
-} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Modal, Pressable, ActivityIndicator} from 'react-native';
 import CustomInput from '../components/CustomInput';
 import Checkbox from '../components/Checkbox';
 import { useNavigation } from '@react-navigation/native';
+import { useContext } from 'react';
+import { AuthContext } from '../AuthContext'; 
+
+
 
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
+
+
 
 const Login = () => {
   const navigation = useNavigation();
@@ -26,6 +24,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const { login } = useContext(AuthContext);
 
   useEffect(() => {
     const errs = {};
@@ -57,6 +56,11 @@ const Login = () => {
       const text = await resp.text();
       let data;
       try { data = JSON.parse(text); } catch { data = null; }
+      
+      console.log("Respuesta completa:", text); // Ver la respuesta cruda del servidor
+      console.log("Objeto JSON:", data); // Ver el objeto JSON después de parsearlo
+      console.log("Access Token recibido:", data?.access_token); // Ver si el token existe
+
 
       if (!resp.ok) {
         const detail = Array.isArray(data?.detail)
@@ -66,7 +70,10 @@ const Login = () => {
         setModalVisible(true);
       } else {
         // Navega a Home pasando el token
-        navigation.replace('Home', { accessToken: data.access_token });
+        console.log("Navegando a Home con accessToken:", data.access_token);
+        login(data.access_token, data.expires_in); // Guarda token en contexto
+        navigation.replace('Home');                
+
       }
     } catch (e) {
       setModalMessage('Error de red, inténtalo más tarde.');
@@ -153,6 +160,7 @@ const Login = () => {
       >
         <Text style={styles.buttonText}>Crear cuenta</Text>
       </TouchableOpacity>
+      
     </View>
   );
 };
