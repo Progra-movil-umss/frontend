@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 
 const Garden = () => (
   <View>
-    <Text>Pantalla Identify</Text>
+    <Text>Pantalla Garden</Text>
   </View>
 );
 
