@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Image, Text, StyleSheet, Alert } from 'react-native';
 import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import GalleryScreen from './GaleryScreen';
+import { useFocusEffect } from '@react-navigation/native';
+
 
 export default function CameraScreen({onClose}) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -12,6 +14,9 @@ export default function CameraScreen({onClose}) {
   const [lastPhoto, setLastPhoto] = useState(null);
   const [showGallery, setShowGallery] = useState(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState(false);
+  const [cameraKey, setCameraKey] = useState(0);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+
 // Permisos de Camara
   useEffect(() => {
     (async () => {
@@ -21,7 +26,16 @@ export default function CameraScreen({onClose}) {
       }
     })();
   }, []);
-
+//Renderizado de camara
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsCameraReady(true); 
+      return () => {
+        setIsCameraReady(false); 
+      };
+    }, [])
+  );
+  
   const takePhoto = async () => {
     if (photos.length >= 5) {
       alert('Ya alcanzaste el límite de 5 fotos para identificar tu planta. \nElimina alguna foto para añadir uno nuevo');
@@ -96,6 +110,7 @@ export default function CameraScreen({onClose}) {
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
+        {permission?.granted && isCameraReady && (
           <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
             <View style={styles.topBar}>
               <TouchableOpacity onPress={toggleFlash}>
@@ -109,6 +124,7 @@ export default function CameraScreen({onClose}) {
               </TouchableOpacity>
             </View>
           </CameraView>
+        )}
 
           <View style={styles.bottomBar}>
             <TouchableOpacity
@@ -140,6 +156,7 @@ export default function CameraScreen({onClose}) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
