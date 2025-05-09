@@ -1,10 +1,19 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import CameraScreen from '../Camera/CameraScreen';
+import { useAuth } from '../AuthContext';
 
-const Identify = () => (
-  <View>
-    <Text>Pantalla Identify</Text>
-  </View>
-);
+
+const Identify = () => {
+  
+  const navigation = useNavigation();
+  const { accessToken } = useAuth();
+  
+
+  return (
+    <CameraScreen onClose={() => navigation.navigate('Inicio')} />
+  );
+};
+
 
 export default Identify;

@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  Pressable,
-  ActivityIndicator
-} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Modal, Pressable, ActivityIndicator} from 'react-native';
 import CustomInput from '../components/CustomInput';
 import Checkbox from '../components/Checkbox';
 import { useNavigation } from '@react-navigation/native';

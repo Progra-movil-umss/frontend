@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
   }, [tokenExpiry]);
- //Obtiene el tiempo de expiracion en expiresInSeconds
+ //Obtiene el tiempo de expiracion 
   const login = (token, expiresInSeconds) => {
     setAccessToken(token);
     const expiryTime = new Date().getTime() + expiresInSeconds * 1000;
