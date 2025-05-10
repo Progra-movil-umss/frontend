@@ -9,8 +9,10 @@ import { AuthProvider } from './AuthContext';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
+
+import Gardens from './screens/Gardens';
+import CreateGarden from './screens/CreateGarden';
 import Identify from './screens/Identify';
-import Garden from './screens/Garden';
 import Profile from './screens/Profile';
 
 
@@ -42,7 +44,7 @@ function HomeTabs() {
     >
       <Tab.Screen name="Inicio" component={Home} />
       <Tab.Screen name="Identificar" component={Identify} />
-      <Tab.Screen name="Jardín" component={Garden} />
+      <Tab.Screen name="Jardín" component={Gardens} />
       <Tab.Screen name="Perfil" component={Profile} />
     </Tab.Navigator>
   );
@@ -72,8 +74,19 @@ export default function App() {
               gestureEnabled: false
             }}
           />
+        <Stack.Screen
+          name="Gardens"
+          component={Gardens}
+          options={{ title: 'Mis Jardines' }}
+        />
+        <Stack.Screen
+          name="CreateGarden"
+          component={CreateGarden}
+          options={{ title: 'Crear Jardín' }}
+        />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
+
   );
 }

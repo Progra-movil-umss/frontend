@@ -1,5 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+
+import Navbar from '../components/Navbar'; // Importa el componente Navbar
+
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
 
@@ -9,6 +13,7 @@ const Home = () => {
   
   const { accessToken } = useAuth();
 
+
   useEffect(() => {
     if (accessToken) {
       console.log("Access Token en Home:", accessToken);
@@ -17,9 +22,15 @@ const Home = () => {
   
   return (
     <View style={styles.container}>
+
+
+      {/* Pasa el accessToken al Navbar */}
+ //     <Navbar accessToken={accessToken} />
+
       <Text style={styles.titleBlack}>Bienvenido a </Text>
       <Text style={styles.titleGreen}>FloraFind</Text>
       {accessToken && <Text>Token: {accessToken}</Text>}
+
     </View>
     
   );
@@ -37,6 +48,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
+
+    color: '#4CAF50',
+
     textAlign: 'center',
   },
   titleBlack: {
