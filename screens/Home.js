@@ -1,37 +1,71 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+
 import Navbar from '../components/Navbar'; // Importa el componente Navbar
 
-const Home = ({ route }) => {
-  const { accessToken } = route.params || {}; // Obtén el accessToken de los parámetros de navegación
 
+import { useEffect, useState } from 'react';
+import { useAuth } from '../AuthContext';
+
+const TITLE_COLOR = '#4CAF50';
+
+const Home = () => {
+  
+  const { accessToken } = useAuth();
+
+
+  useEffect(() => {
+    if (accessToken) {
+      console.log("Access Token en Home:", accessToken);
+    }
+  }, [accessToken]);  // Se ejecuta cada vez que accessToken cambia
+  
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>Bienvenido, tu token es:</Text>
-      <Text style={[styles.welcome, { fontSize: 14 }]} numberOfLines={1}>
-        {accessToken}
-      </Text>
+
 
       {/* Pasa el accessToken al Navbar */}
-      <Navbar accessToken={accessToken} />
+ //     <Navbar accessToken={accessToken} />
+
+      <Text style={styles.titleBlack}>Bienvenido a </Text>
+      <Text style={styles.titleGreen}>FloraFind</Text>
+      {accessToken && <Text>Token: {accessToken}</Text>}
+
     </View>
+    
   );
+  
+
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    paddingTop: 70, 
     alignItems: 'center',
-    padding: 16,
+    
   },
-  welcome: {
-    fontSize: 20,
+  title: {
+    fontSize: 30,
     fontWeight: 'bold',
-    color: '#4CAF50',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-});
 
+    color: '#4CAF50',
+
+    textAlign: 'center',
+  },
+  titleBlack: {
+    color: 'black',
+    fontSize: 30,
+    marginRight: 145,
+    top: 1,
+  },
+  titleGreen: {
+    color: TITLE_COLOR,
+    fontWeight: 'bold',
+    fontSize: 30,
+    marginLeft: 200,
+    top: -43,
+  },
+
+});
 export default Home;
