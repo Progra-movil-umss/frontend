@@ -101,6 +101,7 @@ export default function CameraScreen({onClose}) {
     const result = await response.json();
 
     if (response.ok) {
+      console.log("JSON ",result);
       const {
         bestMatch,
         language,

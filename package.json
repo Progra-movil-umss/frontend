@@ -27,7 +27,7 @@
 
     "react-native-svg": "^15.11.2",
     "react-native-web": "^0.20.0",
-    "expo-secure-store": "~14.2.3"
+    "expo-secure-store": "~14.2.3",
 
     "expo-media-library": "~17.1.6"
 

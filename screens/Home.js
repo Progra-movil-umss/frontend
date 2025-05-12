@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-import Navbar from '../components/Navbar'; // Importa el componente Navbar
+//import Navbar from '../components/Navbar'; // Importa el componente Navbar
 
 
 import { useEffect, useState } from 'react';
@@ -25,7 +25,7 @@ const Home = () => {
 
 
       {/* Pasa el accessToken al Navbar */}
- //     <Navbar accessToken={accessToken} />
+     {/* <Navbar accessToken={accessToken} />*/}
 
       <Text style={styles.titleBlack}>Bienvenido a </Text>
       <Text style={styles.titleGreen}>FloraFind</Text>

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Para el ícono SVG
 import CustomInput from '../components/CustomInput'; // Tu componente de entrada personalizado
+import { useAuth } from '../AuthContext';
 
 const Gardens = ({ route, navigation }) => {
-  const { accessToken } = route.params || {}; // Obtener el token de acceso
+ const { accessToken } = useAuth(); // Obtener el token de acceso
 
   const [gardens, setGardens] = useState([]);  // Lista de jardines
   const [loading, setLoading] = useState(true); // Estado de carga
