@@ -6,14 +6,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Image } from 'react-native';
 import { AuthProvider } from './AuthContext';
 
+
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
-
 import Gardens from './screens/Gardens';
 import CreateGarden from './screens/CreateGarden';
 import Identify from './screens/Identify';
 import Profile from './screens/Profile';
+import PasswordRecoveryScreen from './screens/PasswordRecoveryScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -84,6 +85,12 @@ export default function App() {
           component={CreateGarden}
           options={{ title: 'Crear Jardín' }}
         />
+        <Stack.Screen
+        name="PasswordRecovery"
+        component={PasswordRecoveryScreen}
+        options={{ title: '' }}
+        />
+        
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
