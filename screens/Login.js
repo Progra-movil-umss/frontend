@@ -134,7 +134,7 @@ const Login = () => {
         <Text style={styles.rememberText}>Recordar contraseña</Text>
       </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+      <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')}>
         <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
 

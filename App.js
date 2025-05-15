@@ -9,14 +9,18 @@ import { AuthProvider } from './AuthContext';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
-
 import Gardens from './screens/Gardens';
 import CreateGarden from './screens/CreateGarden';
 import Identify from './screens/Identify';
 import Profile from './screens/Profile';
+
+// Recordatorios
 import Alarms from './screens/Alarms';
 import PlantasDelJardin from './screens/PlantasDelJardin';
 import ConfigurarAlarma from './screens/ConfigurarAlarma';
+
+// Recuperación de contraseña
+import PasswordRecoveryScreen from './screens/PasswordRecoveryScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -27,18 +31,11 @@ function HomeTabs() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           let iconSource;
-
           if (route.name === 'Inicio') iconSource = require('./assets/home.png');
           else if (route.name === 'Identificar') iconSource = require('./assets/search.png');
           else if (route.name === 'Jardín') iconSource = require('./assets/garden.png');
           else if (route.name === 'Perfil') iconSource = require('./assets/profile.png');
-
-          return (
-            <Image
-              source={iconSource}
-              style={{ width: size, height: size, tintColor: color }}
-            />
-          );
+          return <Image source={iconSource} style={{ width: size, height: size, tintColor: color }} />;
         },
         tabBarActiveTintColor: '#4CAF50',
         tabBarInactiveTintColor: 'gray',
@@ -58,52 +55,24 @@ export default function App() {
       <NavigationContainer>
         <StatusBar style="dark" />
         <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Register"
-            component={Register}
-            options={{ title: 'Crear Cuenta' }}
-          />
-          <Stack.Screen
-            name="Home"
-            component={HomeTabs}
-            options={{
-              headerShown: false,
-              gestureEnabled: false
-            }}
-          />
-        <Stack.Screen
-          name="Gardens"
-          component={Gardens}
-          options={{ title: 'Mis Jardines' }}
-        />
-        <Stack.Screen
-          name="CreateGarden"
-          component={CreateGarden}
-          options={{ title: 'Crear Jardín' }}
-        />
-        <Stack.Screen
-          name="Alarms"
-          component={Alarms}
-          options={{ title: 'Alarmas' }}
-        />
-        <Stack.Screen
-          name="PlantasDelJardin"
-          component={PlantasDelJardin}
-          options={{ title: 'Plantas del Jardín' }}
-        />
-        <Stack.Screen
-          name="ConfigurarAlarma"
-          component={ConfigurarAlarma}
-          options={{ title: 'Configurar Alarma' }}
-        />
+          {/* Autenticación */}
+          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={Register} options={{ title: 'Crear Cuenta' }} />
+          <Stack.Screen name="PasswordRecovery" component={PasswordRecoveryScreen} options={{ title: 'Recuperar Contraseña' }} />
+
+          {/* Navegación principal */}
+          <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false, gestureEnabled: false }} />
+
+          {/* Jardines */}
+          <Stack.Screen name="Gardens" component={Gardens} options={{ title: 'Mis Jardines' }} />
+          <Stack.Screen name="CreateGarden" component={CreateGarden} options={{ title: 'Crear Jardín' }} />
+
+          {/* Recordatorios */}
+          <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
+          <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
+          <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
-
   );
 }

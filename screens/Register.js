@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import CustomInput from '../components/CustomInput';
+import { useNavigation } from '@react-navigation/native';
 
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
@@ -20,6 +21,7 @@ const Register = ({ onBack }) => {
   });
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const navigation = useNavigation();
 
   useEffect(() => {
     const errs = {};
@@ -134,8 +136,8 @@ const Register = ({ onBack }) => {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={onBack} style={styles.backLink}>
-          <Text>Volver</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.backLink}>
+          <Text style={styles.backButtonText}>Volver</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -159,8 +161,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  backLink: { alignItems: 'center', marginTop: 8 },
+  backLink: { alignItems: 'center', marginTop: 8, backgroundColor: '#e7f6e9', borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center' },
   error: { color: 'red', fontSize: 12, marginTop: 8 },
+  backButtonText: {
+    color: '#54a468',
+    fontWeight: 'bold',
+  },
+  
 });
 
 export default Register;
