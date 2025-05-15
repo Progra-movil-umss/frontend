@@ -14,7 +14,9 @@ import Gardens from './screens/Gardens';
 import CreateGarden from './screens/CreateGarden';
 import Identify from './screens/Identify';
 import Profile from './screens/Profile';
-
+import Alarms from './screens/Alarms';
+import PlantasDelJardin from './screens/PlantasDelJardin';
+import ConfigurarAlarma from './screens/ConfigurarAlarma';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -83,6 +85,21 @@ export default function App() {
           name="CreateGarden"
           component={CreateGarden}
           options={{ title: 'Crear Jardín' }}
+        />
+        <Stack.Screen
+          name="Alarms"
+          component={Alarms}
+          options={{ title: 'Alarmas' }}
+        />
+        <Stack.Screen
+          name="PlantasDelJardin"
+          component={PlantasDelJardin}
+          options={{ title: 'Plantas del Jardín' }}
+        />
+        <Stack.Screen
+          name="ConfigurarAlarma"
+          component={ConfigurarAlarma}
+          options={{ title: 'Configurar Alarma' }}
         />
         </Stack.Navigator>
       </NavigationContainer>
