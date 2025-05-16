@@ -12,6 +12,7 @@ import Home from './screens/Home';
 import Identify from './screens/Identify';
 import Garden from './screens/Garden';
 import Profile from './screens/Profile';
+import ResultPlantIdentify from './screens/ResultPlantIdentify';
 
 
 const Stack = createNativeStackNavigator();
@@ -72,6 +73,11 @@ export default function App() {
               gestureEnabled: false
             }}
           />
+          <Stack.Screen
+          name="PlantResult"
+          component={ResultPlantIdentify}
+          options={{ title: '' }}
+        />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

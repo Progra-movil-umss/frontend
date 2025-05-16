@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Image, Text, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, Image, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import GalleryScreen from './GaleryScreen';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
-
-export default function CameraScreen({onClose}) {
+export default function CameraScreen({ onClose }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState('back');
   const [flash, setFlash] = useState('off');
@@ -17,10 +17,10 @@ export default function CameraScreen({onClose}) {
   const [isTakingPhoto, setIsTakingPhoto] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
   const { accessToken } = useAuth();
+  const navigation = useNavigation();
 
-  console.log("Access Token en Camara:", accessToken);
-// Permisos de Camara
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
@@ -29,16 +29,16 @@ export default function CameraScreen({onClose}) {
       }
     })();
   }, []);
-//Renderizado de camara
+
   useFocusEffect(
     React.useCallback(() => {
-      setIsCameraReady(true); 
+      setIsCameraReady(true);
       return () => {
-        setIsCameraReady(false); 
+        setIsCameraReady(false);
       };
     }, [])
   );
-  
+
   const takePhoto = async () => {
     if (photos.length >= 5) {
       alert('Ya alcanzaste el límite de 5 fotos para identificar tu planta. \nElimina alguna foto para añadir uno nuevo');
@@ -79,72 +79,40 @@ export default function CameraScreen({onClose}) {
       alert('No hay fotos para identificar');
       return;
     }
+
     const formData = new FormData();
     photos.forEach((uri, index) => {
-    formData.append('images', {
-      uri: uri,
-      name: `image_${index}.jpg`,
-      type: 'image/jpeg',
-    });
-  });
-
-  try {
-    const response = await fetch('https://florafind-aau6a.ondigitalocean.app/plants/identify', {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "multipart/form-data"
-      },
-      body: formData
+      formData.append('images', {
+        uri: uri,
+        name: `image_${index}.jpg`,
+        type: 'image/jpeg',
+      });
     });
 
-    const result = await response.json();
+    setIsLoading(true); 
 
-    if (response.ok) {
-      const {
-        bestMatch,
-        language,
-        predictedOrgans,
-        preferedReferential,
-        query,
-        remainingIdentificationRequests,
-        results,
-        version
-      } = result;
-    
-      let message = `IDENTIFICACIÓN DE PLANTA\n\n`;
-    
-      message += `Planta mejor coincidiente: ${bestMatch}\n`;
-      message += `Idioma: ${language}\n`;
-      message += `Referencial preferido: ${preferedReferential}\n`;
-      message += `Versión del motor: ${version}\n\n`;
-    
-      message += `ÓRGANOS PREDICHOS:\n`;
-      predictedOrgans.forEach((organ, index) => {
-        message += `    Órgano: ${organ.organ}\n`;
-        message += `    Confianza: ${(organ.score * 100).toFixed(2)}%\n\n`;
+    try {
+      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/plants/identify', {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: formData
       });
-    
-      message += `RESULTADOS SUGERIDOS:\n`;
-      results.forEach((res, index) => {
-        const speciesName = res.species?.name || 'No disponible';
-        message += `  Resultado #${index + 1}:\n`;
-        message += `    Especie: ${speciesName}\n`;
-        message += `    Confianza: ${(res.score * 100).toFixed(2)}%\n\n`;
-      });
-    
-      message += `Identificaciones disponibles restantes: ${remainingIdentificationRequests}\n`;
-    
-      alert(message);
-    } else {
-      console.error("Error en respuesta del servidor:", result);
-      alert(`Error del servidor: ${result.message || 'Intenta nuevamente.'}`);
-    }
-    }catch (error) {
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Datos JSON: ', result);
+        navigation.navigate('PlantResult', { result });
+      } else {
+        alert("Error al identificar la planta.");
+      }
+    } catch (error) {
       console.error("Error al enviar las imágenes:", error);
       alert("Ocurrió un error al identificar la planta. Verifica tu conexión e intenta de nuevo.");
+    } finally {
+      setIsLoading(false); 
     }
-  
   };
 
   return (
@@ -153,21 +121,21 @@ export default function CameraScreen({onClose}) {
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
-        {permission?.granted && isCameraReady && (
-          <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
-            <View style={styles.topBar}>
-              <TouchableOpacity onPress={toggleFlash}>
-                <Image
-                  source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
-                  style={styles.icon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onClose}>
-              <Image source={require('../assets/close.png')} style={styles.icon} />
-              </TouchableOpacity>
-            </View>
-          </CameraView>
-        )}
+          {permission?.granted && isCameraReady && (
+            <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
+              <View style={styles.topBar}>
+                <TouchableOpacity onPress={toggleFlash}>
+                  <Image
+                    source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
+                    style={styles.icon}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose}>
+                  <Image source={require('../assets/close.png')} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            </CameraView>
+          )}
 
           <View style={styles.bottomBar}>
             <TouchableOpacity
@@ -191,15 +159,22 @@ export default function CameraScreen({onClose}) {
           <TouchableOpacity
             style={styles.sendButton}
             onPress={handleSendPhotos}
+            disabled={isLoading}
           >
             <Text style={styles.sendButtonText}>Identificar</Text>
           </TouchableOpacity>
+
+          {isLoading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#ffffff" />
+              <Text style={styles.loadingText}>Identificando planta...</Text>
+            </View>
+          )}
         </>
       )}
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -275,5 +250,17 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 10,
+    fontSize: 16,
   },
 });
