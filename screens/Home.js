@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Button, Image } from 'react-
 import { useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import { useFetch } from '../hooks/useFetch';
+import CardGarden from '../components/CardGarden';
 
 const TITLE_COLOR = '#4CAF50';
 
@@ -21,32 +22,35 @@ const Home = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bienvenido a FloraFind</Text>
+    // <View style={styles.container}>
+    //   <Text style={styles.title}>Bienvenido a FloraFind</Text>
 
-      {loading && <ActivityIndicator size="large" color={TITLE_COLOR} />}
+    //   {loading && <ActivityIndicator size="large" color={TITLE_COLOR} />}
       
-      {error && (
-        <Text style={styles.error}>Error: {typeof error === 'string' ? error : JSON.stringify(error)}</Text>
-      )}
+    //   {error && (
+    //     <Text style={styles.error}>Error: {typeof error === 'string' ? error : JSON.stringify(error)}</Text>
+    //   )}
 
-      {data && data.items && data.items.length > 0 ? (
-        <View style={styles.dataContainer}>
-          <Text style={styles.infoText}>Nombre: {data.items[0].name}</Text>
-          <Text style={styles.infoText}>Descripción: {data.items[0].description}</Text>
-          <Image 
-            source={{ uri: data.items[0].image_url }}
-            style={{ width: 200, height: 120, borderRadius: 8 }}
-            resizeMode="cover"
-          />
+    //   {data && data.items && data.items.length > 0 ? (
+    //     <View style={styles.dataContainer}>
+    //       <Text style={styles.infoText}>Nombre: {data.items[0].name}</Text>
+    //       <Text style={styles.infoText}>Descripción: {data.items[0].description}</Text>
+    //       <Image 
+    //         source={{ uri: data.items[0].image_url }}
+    //         style={{ width: 200, height: 120, borderRadius: 8 }}
+    //         resizeMode="cover"
+    //       />
 
-          {/* Aquí puedes añadir más campos o iterar para mostrar todos */}
-        </View>
-      ) : (
-        !loading && <Text>No se encontraron jardines.</Text>
-      )}
+    //       {/* Aquí puedes añadir más campos o iterar para mostrar todos */}
+    //     </View>
+    //   ) : (
+    //     !loading && <Text>No se encontraron jardines.</Text>
+    //   )}
 
-      <Button title="Cancelar petición" onPress={cancelRequest} color="#f44336" />
+    //   <Button title="Cancelar petición" onPress={cancelRequest} color="#f44336" />
+    // </View>
+    <View style={styles.container}>
+      <CardGarden accessToken={accessToken} />
     </View>
   );
 };

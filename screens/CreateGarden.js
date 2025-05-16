@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Image } from 'r
 import * as ImagePicker from 'expo-image-picker';
 import CustomInput from '../components/CustomInput';
 import { useFetchPost } from '../hooks/useFetchPost'; // Tu hook genérico POST
+import { useAuth } from '../AuthContext';
 
 const CreateGarden = ({ route, navigation }) => {
-  const { accessToken } = route.params || {};
-  const { data, loading, error, post } = useFetchPost(accessToken);
+  const { accessToken } = useAuth(); 
+  const { loading, error, post } = useFetchPost(accessToken);
 
   const [gardenName, setGardenName] = useState('');
   const [gardenDescription, setGardenDescription] = useState('');
@@ -15,51 +16,76 @@ const CreateGarden = ({ route, navigation }) => {
 
   // Función para solicitar permisos y seleccionar imagen
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permiso necesario', 'Se requiere permiso para acceder a la galería de imágenes');
-      return;
-    }
+  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permissionResult.granted) {
+    Alert.alert('Permiso necesario', 'Se requiere permiso para acceder a la galería de imágenes');
+    return;
+  }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 0.7,
+    base64: false,  // IMPORTANTE: NO solicitar base64
+  });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
-  };
+  if (!result.canceled && result.assets && result.assets.length > 0) {
+    console.log('URI imagen seleccionada:', result.assets[0].uri);
+    setImage(result.assets[0].uri);
+  }
+};
+
 
   const handleCreateGarden = async () => {
-    if (!gardenName.trim()) {
-      Alert.alert('Error', 'El nombre del jardín es obligatorio');
-      return;
-    }
+  if (!gardenName.trim()) {
+    Alert.alert('Error', 'El nombre del jardín es obligatorio');
+    return;
+  }
 
-    // Crear FormData para multipart/form-data
-    const formData = new FormData();
-    formData.append('name', gardenName);
-    formData.append('description', gardenDescription || '');
+  console.log('URI imagen antes de enviar:', image);
 
-    if (image) {
-      // Extraer extensión para el tipo MIME (png, jpg, jpeg...)
-      const fileType = image.split('.').pop();
-      formData.append('image', {
-        uri: image,
-        name: `garden_image.${fileType}`,
-        type: `image/${fileType}`,
-      });
-    }
-
-    try {
-      await post('https://florafind-aau6a.ondigitalocean.app/gardens', formData, true);
-      setModalVisible(true);
-    } catch (err) {
-      console.error('Error creando jardín:', err);
-      Alert.alert('Error', 'Hubo un problema al crear el jardín');
+  const getMimeType = (ext) => {
+    switch (ext.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      default:
+        return 'image/jpeg';
     }
   };
+
+  const formData = new FormData();
+  formData.append('name', gardenName);
+  formData.append('description', gardenDescription || '');
+
+  if (image) {
+    const fileType = image.split('.').pop();
+    const normalizedUri = image.startsWith('file://') ? image : `file://${image}`;
+
+    formData.append('image', {
+      uri: image,
+      name: `garden_image.${fileType}`,
+      type: getMimeType(fileType),
+    });
+
+  }
+
+  try {
+    await post('https://florafind-aau6a.ondigitalocean.app/gardens', formData, true);
+    setModalVisible(true);
+    console.log('URI imagen:', image);
+  } catch (err) {
+    console.error('Error creando jardín:', err);
+    if (err.body?.detail) {
+      Alert.alert('Error', JSON.stringify(err.body.detail));
+    } else {
+      Alert.alert('Error', 'Hubo un problema al crear el jardín');
+    }
+  }
+  };
+
+
 
   const closeModalAndNavigate = () => {
     setModalVisible(false);
