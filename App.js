@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image } from 'react-native';
+import { Image, View } from 'react-native';
 import { AuthProvider } from './AuthContext';
 
 import Login from './screens/Login';
@@ -50,41 +50,40 @@ function HomeTabs() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Register"
-            component={Register}
-            options={{ title: 'Crear Cuenta' }}
-          />
-          <Stack.Screen
-            name="Home"
-            component={HomeTabs}
-            options={{
-              headerShown: false,
-              gestureEnabled: false
-            }}
-          />
-
-          <Stack.Screen
-          name="Gardens"
-          component={Gardens}
-          options={{ title: 'Mis Jardines' }}
-        />
-        <Stack.Screen
-          name="CreateGarden"
-          component={CreateGarden}
-          options={{ title: 'Crear Jardín' }}
-        />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </AuthProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <StatusBar style="dark" />
+          <Stack.Navigator initialRouteName="Login">
+            <Stack.Screen
+              name="Login"
+              component={Login}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Register"
+              component={Register}
+              options={{ title: 'Crear Cuenta' }}
+            />
+            <Stack.Screen
+              name="Home"
+              component={HomeTabs}
+              options={{
+                headerShown: false,
+                gestureEnabled: false
+              }}
+            />
+            <Stack.Screen
+              name="Gardens"
+              component={Gardens}
+              options={{ title: 'Mis Jardines' }}
+            />
+            <Stack.Screen
+              name="CreateGarden"
+              component={CreateGarden}
+              options={{ title: 'Crear Jardín' }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AuthProvider>
   );
 }
