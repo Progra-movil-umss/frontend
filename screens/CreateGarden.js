@@ -1,63 +1,129 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  Image,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import CustomInput from '../components/CustomInput';
+import { useFetchPost } from '../hooks/useFetchPost';
+import { useAuth } from '../AuthContext';
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const CreateGarden = ({ route, navigation }) => {
-  const { accessToken } = route.params || {}; // Recuperar el token de acceso
+  const { accessToken } = useAuth();
+  const { loading, error: postError, post } = useFetchPost(accessToken);
 
   const [gardenName, setGardenName] = useState('');
   const [gardenDescription, setGardenDescription] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);  // Para el modal de éxito
-
-  // Lógica para seleccionar una imagen (si es necesario)
   const [image, setImage] = useState(null);
-  
+  const [modalVisible, setModalVisible] = useState(false);
+  const [error, setError] = useState(null); // error para validación de imagen
+
+  const validateImageSize = async (uri) => {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      if (fileInfo.size && fileInfo.size > MAX_IMAGE_SIZE) {
+        setError(
+          `La imagen es demasiado pesada (${(fileInfo.size / 1024 / 1024).toFixed(
+            2
+          )} MB). Máximo permitido: 5 MB.`
+        );
+        return false;
+      }
+      setError(null);
+      return true;
+    } catch {
+      setError('No se pudo validar el tamaño de la imagen.');
+      return false;
+    }
+  };
+
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert(
+        'Permiso necesario',
+        'Se requiere permiso para acceder a la galería de imágenes'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const uri = result.assets[0].uri;
+      const isValid = await validateImageSize(uri);
+      if (isValid) {
+        setImage(uri);
+      }
+    }
+  };
+
+  const getMimeType = (ext) => {
+    switch (ext.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      default:
+        return 'image/jpeg';
+    }
+  };
+
   const handleCreateGarden = async () => {
-    if (!gardenName) {
+    if (!gardenName.trim()) {
       Alert.alert('Error', 'El nombre del jardín es obligatorio');
       return;
     }
 
-    // Crear el FormData para enviar como multipart/form-data
+    if (error) {
+      Alert.alert('Error', error);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('name', gardenName);
     formData.append('description', gardenDescription || '');
 
-    // Si tienes una imagen (opcional)
     if (image) {
-      const imageUri = image.uri;
-      const fileType = imageUri.split('.').pop();
+      const fileType = image.split('.').pop();
       formData.append('image', {
-        uri: imageUri,
-        type: `image/${fileType}`,
+        uri: image,
         name: `garden_image.${fileType}`,
+        type: getMimeType(fileType),
       });
     }
 
     try {
-      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/gardens', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Mostrar el modal de éxito
-        setModalVisible(true);
+      await post(
+        'https://florafind-aau6a.ondigitalocean.app/gardens',
+        formData,
+        true
+      );
+      setModalVisible(true);
+    } catch (err) {
+      console.error('Error creando jardín:', err);
+      if (err.body?.detail) {
+        Alert.alert('Error', JSON.stringify(err.body.detail));
       } else {
-        throw new Error('Error al crear el jardín');
+        Alert.alert('Error', 'Hubo un problema al crear el jardín');
       }
-    } catch (error) {
-      console.error('Error al crear el jardín:', error);
-      Alert.alert('Error', 'Hubo un problema al crear el jardín');
     }
   };
 
-  // Función para cerrar el modal y redirigir
   const closeModalAndNavigate = () => {
     setModalVisible(false);
     navigation.navigate('Gardens');
@@ -82,14 +148,34 @@ const CreateGarden = ({ route, navigation }) => {
         numberOfLines={4}
       />
 
+      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+        <Text style={styles.imagePickerText}>Seleccionar Imagen (opcional)</Text>
+      </TouchableOpacity>
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 200, height: 120, borderRadius: 8, marginVertical: 10 }}
+          resizeMode="cover"
+        />
+      )}
+
       <TouchableOpacity
         style={[styles.button, styles.createButton]}
         onPress={handleCreateGarden}
+        disabled={loading}
       >
-        <Text style={styles.buttonText}>Crear Jardín</Text>
+        <Text style={styles.buttonText}>
+          {loading ? 'Creando...' : 'Crear Jardín'}
+        </Text>
       </TouchableOpacity>
 
-      {/* Modal de éxito */}
+      {postError && (
+        <Text style={styles.errorText}>Error: {JSON.stringify(postError)}</Text>
+      )}
+
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -115,17 +201,22 @@ const CreateGarden = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, justifyContent: 'center' },
   title: {
-    fontSize: 28,  // Título más grande
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#4CAF50',  // Color principal
-    marginBottom: 40,  // Más arriba
+    color: '#4CAF50',
+    marginBottom: 40,
     textAlign: 'center',
   },
-  descriptionLabel: {
-    fontSize: 16,
+  imagePickerButton: {
+    backgroundColor: '#ddd',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  imagePickerText: {
+    color: '#333',
     fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#4CAF50',
   },
   button: {
     marginTop: 20,
@@ -134,13 +225,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   createButton: {
-    backgroundColor: '#4CAF50',  // Botón verde
+    backgroundColor: '#4CAF50',
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-    textAlign: 'center',  // Texto centrado en el botón
+    textAlign: 'center',
+  },
+  errorText: {
+    marginTop: 12,
+    color: 'red',
+    textAlign: 'center',
   },
   modalContainer: {
     flex: 1,

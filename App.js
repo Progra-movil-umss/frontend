@@ -1,19 +1,18 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image } from 'react-native';
+import { Image, View } from 'react-native';
 import { AuthProvider } from './AuthContext';
 
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
-import Gardens from './screens/Gardens';
-import CreateGarden from './screens/CreateGarden';
 import Identify from './screens/Identify';
 import Profile from './screens/Profile';
-
+import Gardens from './screens/Gardens';
+import CreateGarden from './screens/CreateGarden';
 // Recordatorios
 import Alarms from './screens/Alarms';
 import PlantasDelJardin from './screens/PlantasDelJardin';

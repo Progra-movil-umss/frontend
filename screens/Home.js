@@ -3,12 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
+import { useFetch } from '../hooks/useFetch';
+import CardGarden from '../components/CardGarden';
 import { useNavigation } from '@react-navigation/native';
 
 const TITLE_COLOR = '#4CAF50';
 
 const Home = () => {
-  
   const { accessToken } = useAuth();
   const navigation = useNavigation();
 
@@ -16,8 +17,13 @@ const Home = () => {
     if (accessToken) {
       console.log("Access Token en Home:", accessToken);
     }
-  }, [accessToken]);  // Se ejecuta cada vez que accessToken cambia
-  
+  }, [accessToken]);
+
+  const { data, loading, error, cancelRequest } = useFetch(
+    'https://florafind-aau6a.ondigitalocean.app/gardens',
+    accessToken
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.titleBlack}>Bienvenido a </Text>
@@ -38,27 +44,26 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 70, 
+    paddingTop: 70,
     alignItems: 'center',
   },
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: TITLE_COLOR,
     textAlign: 'center',
   },
-  titleBlack: {
-    color: 'black',
-    fontSize: 30,
-    marginRight: 145,
-    top: 1,
+  error: {
+    marginTop: 12,
+    color: 'red',
+    textAlign: 'center',
   },
-  titleGreen: {
-    color: TITLE_COLOR,
-    fontWeight: 'bold',
-    fontSize: 30,
-    marginLeft: 200,
-    top: -43,
+  dataContainer: {
+    marginTop: 20,
+  },
+  infoText: {
+    fontSize: 16,
+    marginBottom: 8,
   },
   alarmButton: {
     flexDirection: 'row',

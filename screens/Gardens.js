@@ -1,72 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Para el ícono SVG
-import CustomInput from '../components/CustomInput'; // Tu componente de entrada personalizado
+import React from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+import CardGarden from '../components/CardGarden';
+import Svg, { Path } from 'react-native-svg';
+import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../AuthContext';
 
+const EmptyStateIcon = () => (
+  <Svg
+    width={64}
+    height={64}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="#939393"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <Path d="M17 17v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-4h8" />
+    <Path d="M11.9 7.908a6 6 0 0 0-4.79-4.806" />
+    <Path d="M3 3v2a6 6 0 0 0 6 6h2" />
+    <Path d="M13.531 8.528A6 6 0 0 1 18 5h3v1a6 6 0 0 1-5.037 5.923" />
+    <Path d="M12 15v-3" />
+    <Path d="M3 3l18 18" />
+  </Svg>
+); 
+
 const Gardens = ({ route, navigation }) => {
- const { accessToken } = useAuth(); // Obtener el token de acceso
+  const { accessToken } = useAuth(); 
 
-  const [gardens, setGardens] = useState([]);  // Lista de jardines
-  const [loading, setLoading] = useState(true); // Estado de carga
+  const {
+    data,
+    loading,
+    error,
+    // cancelRequest, // Puedes usarlo si quieres agregar botón cancelar petición
+  } = useFetch('https://florafind-aau6a.ondigitalocean.app/gardens', accessToken);
 
-  useEffect(() => {
-    if (accessToken) {
-      fetchGardens();
-    } else {
+  const gardens = data?.items || [];
+
+  React.useEffect(() => {
+    if (!accessToken) {
       Alert.alert('Error', 'No se ha encontrado el token de acceso');
     }
   }, [accessToken]);
 
-  const fetchGardens = async () => {
-    try {
-      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/gardens', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const data = await response.json();
-      if (data.items) {
-        setGardens(data.items);  // Actualizar estado con los jardines
-      }
-    } catch (error) {
-      console.error('Error al obtener jardines:', error);
-    } finally {
-      setLoading(false);  // Finalizar estado de carga
-    }
+  const handleCreateGarden = () => navigation.navigate('CreateGarden');
+
+  const handleGardenPress = (garden) => {
+    Alert.alert('Jardín seleccionado', garden.name);
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons name="leaf" size={24} color="#939393" />
-      <Text style={styles.emptyText}>Aún no tienes jardines añadidos</Text>
-      <TouchableOpacity
-        style={styles.createButton}
-        onPress={() => navigation.navigate('CreateGarden')}
-      >
-        <Text style={styles.createButtonText}>CREAR JARDÍN</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <Text style={styles.loadingText}>Cargando jardines...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <Text style={styles.errorText}>
+          {typeof error === 'string' ? error : JSON.stringify(error)}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mis Jardines Virtuales</Text>
+      <Text style={styles.title}>Tus Jardines</Text>
 
-      {loading ? (
-        <Text>Cargando jardines...</Text>  // Mensaje de carga mientras se obtienen los jardines
-      ) : gardens.length === 0 ? (
-        renderEmptyState()  // Mostrar mensaje si no hay jardines
+      {gardens.length === 0 ? (
+        <View style={styles.emptyState}>
+          <EmptyStateIcon />
+          <Text style={styles.emptyText}>
+            Aún no tienes jardines añadidos crea uno para empezar
+          </Text>
+          <CardGarden gardens={[]} onCreatePress={handleCreateGarden} />
+        </View>
       ) : (
-        <FlatList
-          data={gardens}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.gardenItem}>
-              <Text style={styles.gardenName}>{item.name}</Text>
-              <Text>{item.description}</Text>
-            </View>
-          )}
+        <CardGarden
+          gardens={gardens}
+          onCreatePress={handleCreateGarden}
+          onGardenPress={handleGardenPress}
         />
       )}
     </View>
@@ -74,20 +91,13 @@ const Gardens = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  gardenItem: { marginBottom: 16, padding: 12, borderWidth: 1, borderRadius: 8 },
-  gardenName: { fontWeight: 'bold', fontSize: 18 },
-  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 18, color: '#939393', marginVertical: 10 },
-  createButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  createButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 40, paddingHorizontal: 16 },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 4, textAlign:"center" },
+  subTitle: { fontSize: 14, fontWeight: '600', marginBottom: 12, color: '#333' },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
+  emptyText: { marginTop: 12, fontSize: 16, color: '#939393', textAlign: 'center' },
+  loadingText: { fontSize: 16, color: '#4CAF50', textAlign: 'center' },
+  errorText: { fontSize: 16, color: 'red', textAlign: 'center' },
 });
 
 export default Gardens;
