@@ -25,7 +25,16 @@ export default function CameraScreen({onClose}) {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso requerido', 'Se requiere acceso a la cámara para usar esta función.');
+        Alert.alert('Permiso requerido', 'Se requiere acceso a la cámara para usar esta función.', [
+          {
+            text: 'OK',
+            onPress: async () => {
+              await requestPermission();
+            },
+          },
+        ]);
+      } else {
+        await requestPermission();
       }
     })();
   }, []);
@@ -154,47 +163,59 @@ export default function CameraScreen({onClose}) {
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
-        {permission?.granted && isCameraReady && (
-          <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
-            <View style={styles.topBar}>
-              <TouchableOpacity onPress={toggleFlash}>
-                <Image
-                  source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
-                  style={styles.icon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onClose}>
-              <Image source={require('../assets/close.png')} style={styles.icon} />
+          {!permission?.granted && (
+            <View style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000'}}>
+              <Text style={{color:'#fff', fontSize:18, textAlign:'center', padding:24}}>
+                No tienes permisos de cámara habilitados. Ve a la configuración del sistema y otórgalos para usar esta función.
+              </Text>
+            </View>
+          )}
+          {permission?.granted && !isCameraReady && (
+            <View style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000'}}>
+              <Text style={{color:'#fff', fontSize:18, textAlign:'center', padding:24}}>
+                Cargando cámara...
+              </Text>
+            </View>
+          )}
+          {permission?.granted && isCameraReady && (
+            <View style={{flex:1}}>
+              <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef} />
+              <View style={styles.topBar} pointerEvents="box-none">
+                <TouchableOpacity onPress={toggleFlash}>
+                  <Image
+                    source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
+                    style={styles.icon}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose}>
+                  <Image source={require('../assets/close.png')} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.bottomBar} pointerEvents="box-none">
+                <TouchableOpacity
+                  onPress={takePhoto}
+                  disabled={isTakingPhoto}
+                  style={[styles.shutterButton, isTakingPhoto && { opacity: 0.5 }]}
+                >
+                  <Image source={require('../assets/shutter.png')} style={styles.shutterIcon} />
+                </TouchableOpacity>
+              </View>
+              {lastPhoto && (
+                <TouchableOpacity
+                  style={styles.thumbnailContainer}
+                  onPress={() => setShowGallery(true)}
+                >
+                  <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSendPhotos}
+              >
+                <Text style={styles.sendButtonText}>Identificar</Text>
               </TouchableOpacity>
             </View>
-          </CameraView>
-        )}
-
-          <View style={styles.bottomBar}>
-            <TouchableOpacity
-              onPress={takePhoto}
-              disabled={isTakingPhoto}
-              style={[styles.shutterButton, isTakingPhoto && { opacity: 0.5 }]}
-            >
-              <Image source={require('../assets/shutter.png')} style={styles.shutterIcon} />
-            </TouchableOpacity>
-          </View>
-
-          {lastPhoto && (
-            <TouchableOpacity
-              style={styles.thumbnailContainer}
-              onPress={() => setShowGallery(true)}
-            >
-              <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
-            </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={handleSendPhotos}
-          >
-            <Text style={styles.sendButtonText}>Identificar</Text>
-          </TouchableOpacity>
         </>
       )}
     </View>
