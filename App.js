@@ -9,14 +9,18 @@ import { AuthProvider } from './AuthContext';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Home from './screens/Home';
-import Identify from './screens/Identify';
-import Profile from './screens/Profile';
 import Gardens from './screens/Gardens';
 import CreateGarden from './screens/CreateGarden';
+import Profile from './screens/Profile';
+//Identificacion
+import Identify from './screens/Identify';
+import ResultPlantIdentify from './screens/ResultPlantIdentify';
+
 // Recordatorios
 import Alarms from './screens/Alarms';
 import PlantasDelJardin from './screens/PlantasDelJardin';
 import ConfigurarAlarma from './screens/ConfigurarAlarma';
+
 
 // Recuperación de contraseña
 import PasswordRecoveryScreen from './screens/PasswordRecoveryScreen';
@@ -55,7 +59,7 @@ export default function App() {
     <AuthProvider>
       <NavigationContainer>
         <StatusBar style="dark" />
-        <Stack.Navigator initialRouteName="Login">
+        <Stack.Navigator initialRouteName="Login">   
           {/* Autenticación */}
           <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={Register} options={{ title: 'Crear Cuenta' }} />
@@ -72,7 +76,8 @@ export default function App() {
           <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
           <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
           <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
-          <Stack.Screen name="Plants" component={Plants} options={({ route }) => ({ title: ' '})}/>
+           {/*Identificacion de la planta*/}
+          <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
