@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Image, Text, StyleSheet, Alert } from 'react-na
 import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import GalleryScreen from './GaleryScreen';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../AuthContext';
 
 
 export default function CameraScreen({onClose}) {
@@ -16,13 +17,24 @@ export default function CameraScreen({onClose}) {
   const [isTakingPhoto, setIsTakingPhoto] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const { accessToken } = useAuth();
 
+  console.log("Access Token en Camara:", accessToken);
 // Permisos de Camara
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso requerido', 'Se requiere acceso a la cámara para usar esta función.');
+        Alert.alert('Permiso requerido', 'Se requiere acceso a la cámara para usar esta función.', [
+          {
+            text: 'OK',
+            onPress: async () => {
+              await requestPermission();
+            },
+          },
+        ]);
+      } else {
+        await requestPermission();
       }
     })();
   }, []);
@@ -77,7 +89,7 @@ export default function CameraScreen({onClose}) {
       return;
     }
     const formData = new FormData();
-  photos.forEach((uri, index) => {
+    photos.forEach((uri, index) => {
     formData.append('images', {
       uri: uri,
       name: `image_${index}.jpg`,
@@ -86,22 +98,63 @@ export default function CameraScreen({onClose}) {
   });
 
   try {
-    const response = await fetch('https://florafind-aau6a.ondigitalocean.app/Identify', {
+    const response = await fetch('https://florafind-aau6a.ondigitalocean.app/plants/identify', {
       method: "POST",
       headers: {
-        "Authorization": "Bearer TU_TOKEN_AQUI",
+        "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "multipart/form-data"
       },
       body: formData
     });
 
     const result = await response.json();
-    console.log("Resultado de la identificación:", result);
-    alert(`Planta identificada: ${JSON.stringify(result)}`);
-  } catch (error) {
-    console.error("Error al enviar las imágenes:", error);
-    alert("Error al identificar la planta. Intenta de nuevo.");
-  }
+
+    if (response.ok) {
+      console.log("JSON ",result);
+      const {
+        bestMatch,
+        language,
+        predictedOrgans,
+        preferedReferential,
+        query,
+        remainingIdentificationRequests,
+        results,
+        version
+      } = result;
+    
+      let message = `IDENTIFICACIÓN DE PLANTA\n\n`;
+    
+      message += `Planta mejor coincidiente: ${bestMatch}\n`;
+      message += `Idioma: ${language}\n`;
+      message += `Referencial preferido: ${preferedReferential}\n`;
+      message += `Versión del motor: ${version}\n\n`;
+    
+      message += `ÓRGANOS PREDICHOS:\n`;
+      predictedOrgans.forEach((organ, index) => {
+        message += `    Órgano: ${organ.organ}\n`;
+        message += `    Confianza: ${(organ.score * 100).toFixed(2)}%\n\n`;
+      });
+    
+      message += `RESULTADOS SUGERIDOS:\n`;
+      results.forEach((res, index) => {
+        const speciesName = res.species?.name || 'No disponible';
+        message += `  Resultado #${index + 1}:\n`;
+        message += `    Especie: ${speciesName}\n`;
+        message += `    Confianza: ${(res.score * 100).toFixed(2)}%\n\n`;
+      });
+    
+      message += `Identificaciones disponibles restantes: ${remainingIdentificationRequests}\n`;
+    
+      alert(message);
+    } else {
+      console.error("Error en respuesta del servidor:", result);
+      alert(`Error del servidor: ${result.message || 'Intenta nuevamente.'}`);
+    }
+    }catch (error) {
+      console.error("Error al enviar las imágenes:", error);
+      alert("Ocurrió un error al identificar la planta. Verifica tu conexión e intenta de nuevo.");
+    }
+  
   };
 
   return (
@@ -110,47 +163,59 @@ export default function CameraScreen({onClose}) {
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
-        {permission?.granted && isCameraReady && (
-          <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
-            <View style={styles.topBar}>
-              <TouchableOpacity onPress={toggleFlash}>
-                <Image
-                  source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
-                  style={styles.icon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onClose}>
-              <Image source={require('../assets/close.png')} style={styles.icon} />
+          {!permission?.granted && (
+            <View style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000'}}>
+              <Text style={{color:'#fff', fontSize:18, textAlign:'center', padding:24}}>
+                No tienes permisos de cámara habilitados. Ve a la configuración del sistema y otórgalos para usar esta función.
+              </Text>
+            </View>
+          )}
+          {permission?.granted && !isCameraReady && (
+            <View style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#000'}}>
+              <Text style={{color:'#fff', fontSize:18, textAlign:'center', padding:24}}>
+                Cargando cámara...
+              </Text>
+            </View>
+          )}
+          {permission?.granted && isCameraReady && (
+            <View style={{flex:1}}>
+              <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef} />
+              <View style={styles.topBar} pointerEvents="box-none">
+                <TouchableOpacity onPress={toggleFlash}>
+                  <Image
+                    source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
+                    style={styles.icon}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose}>
+                  <Image source={require('../assets/close.png')} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.bottomBar} pointerEvents="box-none">
+                <TouchableOpacity
+                  onPress={takePhoto}
+                  disabled={isTakingPhoto}
+                  style={[styles.shutterButton, isTakingPhoto && { opacity: 0.5 }]}
+                >
+                  <Image source={require('../assets/shutter.png')} style={styles.shutterIcon} />
+                </TouchableOpacity>
+              </View>
+              {lastPhoto && (
+                <TouchableOpacity
+                  style={styles.thumbnailContainer}
+                  onPress={() => setShowGallery(true)}
+                >
+                  <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSendPhotos}
+              >
+                <Text style={styles.sendButtonText}>Identificar</Text>
               </TouchableOpacity>
             </View>
-          </CameraView>
-        )}
-
-          <View style={styles.bottomBar}>
-            <TouchableOpacity
-              onPress={takePhoto}
-              disabled={isTakingPhoto}
-              style={[styles.shutterButton, isTakingPhoto && { opacity: 0.5 }]}
-            >
-              <Image source={require('../assets/shutter.png')} style={styles.shutterIcon} />
-            </TouchableOpacity>
-          </View>
-
-          {lastPhoto && (
-            <TouchableOpacity
-              style={styles.thumbnailContainer}
-              onPress={() => setShowGallery(true)}
-            >
-              <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
-            </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={handleSendPhotos}
-          >
-            <Text style={styles.sendButtonText}>Identificar</Text>
-          </TouchableOpacity>
         </>
       )}
     </View>
