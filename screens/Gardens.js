@@ -4,6 +4,8 @@ import CardGarden from '../components/CardGarden';
 import Svg, { Path } from 'react-native-svg';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../AuthContext';
+import BottomSheetModal from '../components/BottomSheetModal';
+import { useState } from 'react';
 
 const EmptyStateIcon = () => (
   <Svg
@@ -27,7 +29,50 @@ const EmptyStateIcon = () => (
 
 const Gardens = ({ route, navigation }) => {
   const { accessToken } = useAuth(); 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedGarden, setSelectedGarden] = useState(null);
 
+  // Función para abrir modal con el jardín seleccionado
+  const openOptions = (garden) => {
+    setSelectedGarden(garden);
+    setModalVisible(true);
+  };
+
+  // Cerrar modal y limpiar jardín seleccionado
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedGarden(null);
+  };
+
+  // Funciones para cada acción del modal
+  const handleEdit = () => {
+    if (!selectedGarden) return;
+    navigation.navigate('CreateGarden', { gardenToEdit: selectedGarden });
+  };
+
+  const handleDelete = () => {
+    if (!selectedGarden) return;
+    closeModal();
+    Alert.alert(
+      'Confirmar eliminación',
+      `¿Estás seguro de eliminar el jardín "${selectedGarden.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: () => {
+            // TODO: lógica para eliminar el jardín vía API y actualizar lista
+            alert(`Eliminar jardín: ${selectedGarden.name}`);
+          }
+        },
+      ]
+    );
+  };
+
+  // Opciones del modal que pasaremos al componente
+  const modalOptions = [
+    { label: 'Editar', onPress: handleEdit },
+    { label: 'Eliminar', onPress: handleDelete, destructive: true },
+  ];
+  
   const {
     data,
     loading,
@@ -45,9 +90,17 @@ const Gardens = ({ route, navigation }) => {
 
   const handleCreateGarden = () => navigation.navigate('CreateGarden');
 
+  // En Gardens.js reemplaza esta función:
+
   const handleGardenPress = (garden) => {
-    Alert.alert('Jardín seleccionado', garden.name);
+    console.log('Garden ID:', garden.id); // Verifica si el id se pasa correctamente
+    navigation.navigate('Plants', {
+      gardenId: garden.id,
+      gardenName: garden.name,
+    });
   };
+
+
 
   if (loading) {
     return (
@@ -84,8 +137,16 @@ const Gardens = ({ route, navigation }) => {
           gardens={gardens}
           onCreatePress={handleCreateGarden}
           onGardenPress={handleGardenPress}
+          onOptionsPress={openOptions}
         />
+        
       )}
+      <BottomSheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={selectedGarden ? selectedGarden.name : 'Opciones'}
+        options={modalOptions}
+      />
     </View>
   );
 };
