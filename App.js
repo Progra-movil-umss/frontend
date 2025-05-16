@@ -20,7 +20,7 @@ import ResultPlantIdentify from './screens/ResultPlantIdentify';
 import Alarms from './screens/Alarms';
 import PlantasDelJardin from './screens/PlantasDelJardin';
 import ConfigurarAlarma from './screens/ConfigurarAlarma';
->>>>>>> FloraFind-Frontend
+
 
 // Recuperación de contraseña
 import PasswordRecoveryScreen from './screens/PasswordRecoveryScreen';
