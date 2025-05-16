@@ -1,33 +1,45 @@
 {
   "expo": {
-    "name": "flora-find-p-movil",
-    "slug": "flora-find-p-movil",
+    "name": "Flora Find",
+    "slug": "flora-find",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/LogoFloraFind2.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/LogoFloraFind2.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#4CAF50"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/LogoFloraFind2.png",
+        "backgroundColor": "#4CAF50"
       },
-      "package": "com.jose701.florafindpmovil"
+      "package": "com.florafind",
+      "permissions": [
+        "VIBRATE",
+        "SCHEDULE_EXACT_ALARM",
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/LogoFloraFind2.png"
     },
+    "plugins": [
+      "expo-secure-store",
+      "expo-alarm-module"
+    ],
     "extra": {
       "eas": {
-        "projectId": "200ffdaf-bac8-4a4f-bf9e-c6f4282ec3b8"
+        "projectId": "21982549-b416-4b15-9ada-647fbd214634"
+
       }
     }
   }

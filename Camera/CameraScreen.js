@@ -25,7 +25,16 @@ export default function CameraScreen({ onClose }) {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso requerido', 'Se requiere acceso a la cámara para usar esta función.');
+        Alert.alert('Permiso requerido', 'Se requiere acceso a la cámara para usar esta función.', [
+          {
+            text: 'OK',
+            onPress: async () => {
+              await requestPermission();
+            },
+          },
+        ]);
+      } else {
+        await requestPermission();
       }
     })();
   }, []);
@@ -91,6 +100,7 @@ export default function CameraScreen({ onClose }) {
 
     setIsLoading(true); 
 
+
     try {
       const response = await fetch('https://florafind-aau6a.ondigitalocean.app/plants/identify', {
         method: "POST",
@@ -121,9 +131,11 @@ export default function CameraScreen({ onClose }) {
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
+
           {permission?.granted && isCameraReady && (
             <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
               <View style={styles.topBar}>
+
                 <TouchableOpacity onPress={toggleFlash}>
                   <Image
                     source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
@@ -134,6 +146,7 @@ export default function CameraScreen({ onClose }) {
                   <Image source={require('../assets/close.png')} style={styles.icon} />
                 </TouchableOpacity>
               </View>
+
             </CameraView>
           )}
 
