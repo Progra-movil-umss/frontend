@@ -69,8 +69,7 @@ const Gardens = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Jardin</Text>
-      <Text style={styles.subTitle}>Tus jardines</Text>
+      <Text style={styles.title}>Tus Jardines</Text>
 
       {gardens.length === 0 ? (
         <View style={styles.emptyState}>
@@ -93,7 +92,7 @@ const Gardens = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 40, paddingHorizontal: 16 },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 4 },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 4, textAlign:"center" },
   subTitle: { fontSize: 14, fontWeight: '600', marginBottom: 12, color: '#333' },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   emptyText: { marginTop: 12, fontSize: 16, color: '#939393', textAlign: 'center' },

@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+const defaultImage = require('../assets/defaultGarden1.png');
+
 const CardGarden = ({ gardens, onCreatePress, onGardenPress }) => {
   const renderGarden = ({ item }) => (
     <TouchableOpacity
@@ -17,10 +19,16 @@ const CardGarden = ({ gardens, onCreatePress, onGardenPress }) => {
       activeOpacity={0.8}
     >
       {item.image_url ? (
-        <Image source={{ uri: item.image_url }} style={styles.image} />
+        <Image 
+            source={item.image_url ? { uri: item.image_url } : defaultImage} 
+            style={styles.image} 
+        />
       ) : (
         <View style={[styles.image, styles.imagePlaceholder]}>
-          <Text style={styles.imagePlaceholderText}>Sin imagen</Text>
+          <Image 
+            source={defaultImage}
+            style={styles.image}
+          />
         </View>
       )}
       <View style={styles.textContainer}>
@@ -78,8 +86,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: 72,
-    height: 72,
+    width: 120,
+    height: 120,
     borderRadius: 8,
   },
   imagePlaceholder: {
