@@ -4,20 +4,24 @@
     "slug": "flora-find",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/LogoFloraFind2.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/LogoFloraFind2.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#4CAF50"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.florafind.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/LogoFloraFind2.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#4CAF50"
       },
       "package": "com.florafind",
@@ -26,11 +30,18 @@
         "SCHEDULE_EXACT_ALARM",
         "RECEIVE_BOOT_COMPLETED",
         "WAKE_LOCK",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
-      "favicon": "./assets/LogoFloraFind2.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-secure-store",
