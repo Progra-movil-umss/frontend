@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../AuthContext';
 import CardPlants from '../components/CardPlants';
+import { Ionicons } from '@expo/vector-icons';
 
-const Plants = ({ route }) => {
+const Plants = ({ route, navigation }) => {
   const { gardenId, gardenName } = route.params;
   const { accessToken } = useAuth();
 
@@ -30,6 +30,15 @@ const Plants = ({ route }) => {
       </View>
     );
   }
+
+  const handleIdentifyPress = () => {
+    if (!accessToken) {
+      // Si no hay token, muestra alerta y evita navegar
+      alert('No autorizado. Por favor, inicia sesión.');
+      return;
+    }
+    navigation.navigate('Identificar', { accessToken }); // Envía el token si la pantalla lo necesita
+  };
 
   return (
     <View style={styles.container}>
@@ -57,18 +66,26 @@ const Plants = ({ route }) => {
           })
         )}
       </ScrollView>
+
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={handleIdentifyPress}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="add" size={32} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f9f9f9' },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 20, textAlign: 'center', },
+  container: { flex: 1, paddingHorizontal: 8, backgroundColor: '#f9f9f9' },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 20, textAlign: 'center', paddingHorizontal: 8, },
   plantsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 20,
+    justifyContent: 'space-evenly',
+    paddingBottom: 20,
   },
   noPlantsText: {
     textAlign: 'center',
@@ -79,6 +96,22 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { color: 'red', fontSize: 16, textAlign: 'center' },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#4CAF50',
+    borderRadius: 32,
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
 });
 
 export default Plants;

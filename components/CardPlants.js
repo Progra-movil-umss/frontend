@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: 160,
     marginBottom: 20,
+    marginHorizontal: 6,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -37,7 +38,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16, // Solo borde superior derecho redondeado
     borderBottomLeftRadius: 0,  // Los bordes inferiores sin redondear para "salir" del card
     borderBottomRightRadius: 0,
-    marginBottom: 12,
     backgroundColor: '#777',
   },
   textContainer: {

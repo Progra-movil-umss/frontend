@@ -26,6 +26,7 @@ import ConfigurarAlarma from './screens/ConfigurarAlarma';
 import PasswordRecoveryScreen from './screens/PasswordRecoveryScreen';
 
 import Plants from './screens/Plants';
+import CreatePlant from './screens/CreatePlant';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -76,9 +77,11 @@ export default function App() {
           <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
           <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
           <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
-           {/*Identificacion de la planta*/}
+          {/*Identificacion de la planta*/}
+          <Stack.Screen name="Identificar" component={Identify} />
           <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
           <Stack.Screen name="Plants" component={Plants} options={{ title: `Plantas` }}/>
+          <Stack.Screen name="CreatePlant" component={CreatePlant} options={{ title: 'Crear Planta' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
