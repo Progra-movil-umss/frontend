@@ -78,6 +78,7 @@ export default function App() {
           <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
            {/*Identificacion de la planta*/}
           <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
+          <Stack.Screen name="Plants" component={Plants} options={{ title: `Plantas` }}/>
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

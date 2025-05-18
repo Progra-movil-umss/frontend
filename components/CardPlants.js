@@ -1,5 +1,3 @@
-// components/CardPlants.js
-import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 const CardPlants = ({ imageUri, name, scientificName }) => {
@@ -12,40 +10,53 @@ const CardPlants = ({ imageUri, name, scientificName }) => {
         style={styles.image}
         resizeMode="cover"
       />
-      <Text style={styles.name}>{name}</Text>  {/* Alias */}
-      <Text style={styles.scientificName}>{scientificName}</Text>  {/* Nombre científico */}
+      <View style={styles.textContainer}>
+        <Text style={styles.name}>{name || "Sin nombre"}</Text>
+        <Text style={styles.scientificName}>{scientificName || "Nombre científico desconocido"}</Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: 'transparent',
+    borderRadius: 16,
     width: 160,
-    padding: 12,
-    marginBottom: 16,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 7,
   },
   image: {
     width: '100%',
-    height: 100,
-    borderRadius: 12,
-    marginBottom: 8,
+    height: 120,
+    borderTopLeftRadius: 16,  // Solo borde superior izquierdo redondeado
+    borderTopRightRadius: 16, // Solo borde superior derecho redondeado
+    borderBottomLeftRadius: 0,  // Los bordes inferiores sin redondear para "salir" del card
+    borderBottomRightRadius: 0,
+    marginBottom: 12,
+    backgroundColor: '#777',
+  },
+  textContainer: {
+    backgroundColor: '#fff',
+    borderBottomLeftRadius: 16,  // Bordes inferiores redondeados
+    borderBottomRightRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   name: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 4,
-    color: '#111',
+    marginBottom: 6,
+    color: '#222',
   },
   scientificName: {
     fontSize: 12,
-    color: '#777',  // Color más tenue para el nombre científico
+    color: '#666',
+    fontStyle: 'italic',
   },
 });
 

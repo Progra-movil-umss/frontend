@@ -63,11 +63,12 @@ const Plants = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#f9f9f9' },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#4CAF50', marginBottom: 12 },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 20, textAlign: 'center', },
   plantsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 20,
   },
   noPlantsText: {
     textAlign: 'center',
