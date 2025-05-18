@@ -1,20 +1,28 @@
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const CardPlants = ({ imageUri, name, scientificName }) => {
-  
+const CardPlants = ({ imageUri, name, scientificName, plantProps }) => {
+  const navigation = useNavigation();
+
   const defaultImgPlant = require('../assets/defaultPlant.png');
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={() => navigation.navigate('PlantDetails', { plant: plantProps })}
+    >
       <Image
-        source={imageUri ? { uri: imageUri } : defaultImgPlant } // Imagen predeterminada si no existe URL
+        source={imageUri ? { uri: imageUri } : defaultImgPlant} // Imagen predeterminada si no existe URL
         style={styles.image}
         resizeMode="cover"
       />
       <View style={styles.textContainer}>
-        <Text style={styles.name}>{name || "Sin nombre"}</Text>
-        <Text style={styles.scientificName}>{scientificName || "Nombre científico desconocido"}</Text>
+        <Text style={styles.name}>{name || 'Sin nombre'}</Text>
+        <Text style={styles.scientificName}>
+          {scientificName || 'Nombre científico desconocido'}
+        </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

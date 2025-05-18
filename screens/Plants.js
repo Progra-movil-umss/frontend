@@ -61,6 +61,7 @@ const Plants = ({ route, navigation }) => {
                 imageUri={imageUri}
                 name={plantName}
                 scientificName={scientificName}
+                plantProps={plant}
               />
             );
           })
