@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, Platform, Image, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as AlarmModule from 'expo-alarm-module';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiFetch } from '../core/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Alarms = ({ navigation }) => {
   const { accessToken } = useAuth();
@@ -15,6 +17,8 @@ const Alarms = ({ navigation }) => {
   const [selectedPlant, setSelectedPlant] = useState([]);
   const [showPlantSelector, setShowPlantSelector] = useState(false);
   const [showAlarmModal, setShowAlarmModal] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     if (accessToken) fetchGardens();
@@ -22,10 +26,9 @@ const Alarms = ({ navigation }) => {
 
   const fetchGardens = async () => {
     try {
-      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/gardens', {
+      const { data } = await apiFetch('/gardens', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      const data = await response.json();
       setGardens(data.items || []);
     } catch (e) {
       Alert.alert('Error', 'No se pudieron cargar los jardines');
@@ -36,10 +39,9 @@ const Alarms = ({ navigation }) => {
 
   const fetchPlants = async (gardenId) => {
     try {
-      const response = await fetch(`https://florafind-aau6a.ondigitalocean.app/gardens/${gardenId}/plants`, {
+      const { data } = await apiFetch(`/gardens/${gardenId}/plants`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      const data = await response.json();
       setPlants(data.items || []);
       setShowPlantSelector(true);
     } catch (e) {
@@ -66,7 +68,7 @@ const Alarms = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, isDark && { backgroundColor: '#111' }]} edges={['top', 'left', 'right', 'bottom']}>
       <Text style={styles.title}>Selecciona uno o varios jardines</Text>
       {loading ? (
         <Text>Cargando jardines...</Text>
@@ -85,16 +87,20 @@ const Alarms = ({ navigation }) => {
               onLongPress={() => handleGardenLongPress(item)}
             >
               {item.image_url ? (
-                <Image source={{ uri: item.image_url }} style={styles.gardenImageGrid} />
+                <View style={{ width: '100%', position: 'relative', flex: 1 }}>
+                  <Image source={{ uri: item.image_url }} style={styles.gardenImageGrid} />
+                  <View style={styles.gardenTextOverlay}>
+                    <Text style={styles.gardenName}>{item.name}</Text>
+                    <Text style={styles.gardenDesc}>{item.description}</Text>
+                  </View>
+                </View>
               ) : (
                 <View style={[styles.gardenImageGrid, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e0e0e0' }]}>
                   <MaterialCommunityIcons name="flower" size={40} color="#A5A5A5" />
                 </View>
               )}
-              <Text style={styles.gardenName}>{item.name}</Text>
-              <Text style={styles.gardenDesc}>{item.description}</Text>
               {selectedGardens.some(g => g.id === item.id) && (
-                <Ionicons name="checkmark-circle" size={24} color="#388e3c" style={{ position: 'absolute', top: 8, right: 8 }} />
+                <Ionicons name="checkmark-circle" size={24} color="#388e3c" style={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }} />
               )}
             </TouchableOpacity>
           )}
@@ -106,7 +112,7 @@ const Alarms = ({ navigation }) => {
         </TouchableOpacity>
       )}
       {showPlantSelector && (
-        <Modal visible={showPlantSelector} animationType="slide" transparent>
+        <Modal visible={showPlantSelector} animationType="slide" transparent={true} onRequestClose={() => setShowPlantSelector(false)}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Selecciona una planta</Text>
@@ -132,7 +138,7 @@ const Alarms = ({ navigation }) => {
                           <MaterialCommunityIcons name="leaf" size={24} color="#A5A5A5" />
                         </View>
                       )}
-                      <View style={{ flex: 1 }}>
+                      <View style={styles.plantTextOverlay}>
                         <Text style={styles.plantName}>{item.alias || item.scientific_name_without_author}</Text>
                         <Text style={styles.plantDesc}>{item.common_names?.join(', ')}</Text>
                       </View>
@@ -161,29 +167,134 @@ const Alarms = ({ navigation }) => {
           </View>
         </Modal>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#fff', // Siempre blanco para máxima legibilidad
+  },
   gardenRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  gardenItemGrid: { flex: 1, backgroundColor: '#e7f6e9', borderRadius: 10, padding: 10, margin: 4, alignItems: 'center', maxWidth: '48%' },
-  gardenImageGrid: { width: 80, height: 80, borderRadius: 10, marginBottom: 8 },
-  gardenName: { fontSize: 18, color: '#333' },
-  gardenDesc: { color: '#666', fontSize: 14 },
+  gardenItemGrid: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    margin: 6,
+    alignItems: 'center',
+    maxWidth: '48%',
+    // Sombra sutil
+    shadowColor: '#000',
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+    padding: 0,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+  },
+  gardenImageGrid: {
+    width: '100%',
+    aspectRatio: 1,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    resizeMode: 'cover',
+    minHeight: 120,
+    maxHeight: 160,
+  },
+  gardenTextOverlay: {
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  gardenName: {
+    fontSize: 17,
+    color: '#fff', // Siempre blanco para máxima legibilidad
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  gardenDesc: {
+    color: '#fff', // Siempre blanco para máxima legibilidad
+    fontSize: 13,
+    marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
   modalContent: { backgroundColor: '#fff', padding: 24, borderRadius: 10, alignItems: 'stretch', width: '90%', maxWidth: 400 },
   modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
   saveButton: { backgroundColor: '#4CAF50', padding: 12, borderRadius: 8, marginTop: 20, width: '100%' },
-  saveButtonText: { color: '#fff', fontWeight: 'bold', textAlign: 'center' },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   cancelButton: { marginTop: 10 },
-  cancelButtonText: { color: '#4CAF50', fontWeight: 'bold' },
-  plantItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderWidth: 1, borderRadius: 8, marginBottom: 10, borderColor: '#4CAF50', backgroundColor: '#f9f9f9' },
-  plantImage: { width: 50, height: 50, borderRadius: 8, marginRight: 10 },
-  plantName: { fontSize: 16, fontWeight: 'bold' },
-  plantDesc: { color: '#666', fontSize: 13 },
+  cancelButtonText: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  plantItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderColor: '#4CAF50',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  plantImage: {
+    width: 70,
+    height: 70,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    resizeMode: 'cover',
+    backgroundColor: '#e0e0e0',
+  },
+  plantTextOverlay: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+  },
+  plantName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff', // Siempre blanco para máxima legibilidad
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  plantDesc: {
+    color: '#fff', // Siempre blanco para máxima legibilidad
+    fontSize: 13,
+    marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
   floatingSaveButton: {
     position: 'absolute',
     left: 24,

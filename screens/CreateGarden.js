@@ -7,12 +7,13 @@ import {
   Alert,
   Modal,
   Image,
+  useColorScheme,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import CustomInput from '../components/CustomInput';
 import { useFetchPost } from '../hooks/useFetchPost';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -25,6 +26,9 @@ const CreateGarden = ({ route, navigation }) => {
   const [image, setImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null); // error para validación de imagen
+
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const validateImageSize = async (uri) => {
     try {
@@ -130,7 +134,7 @@ const CreateGarden = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
       <Text style={styles.title}>Nuevo Jardín</Text>
 
       <CustomInput

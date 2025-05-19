@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, useColorScheme } from 'react-native';
 import CustomInput from '../components/CustomInput';
 import { useNavigation } from '@react-navigation/native';
+import { apiFetch } from '../core/api';
 
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
@@ -22,6 +23,8 @@ const Register = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const navigation = useNavigation();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     const errs = {};
@@ -36,39 +39,29 @@ const Register = ({ onBack }) => {
   }, [username, email, password, confirm]);
 
   const handleRegister = async () => {
-    setServerError('');
     setLoading(true);
+    setServerError('');
     try {
-      const resp = await fetch(
-        'https://florafind-aau6a.ondigitalocean.app/auth/register',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, username, password }),
-        }
-      );
-      const data = await resp.json();
-      if (resp.status === 201) {
-        console.log('Usuario registrado:', data);
-        Alert.alert('Éxito', 'Usuario registrado correctamente', [
-          { text: 'OK', onPress: onBack },
-        ]);
+      const { data: result, ok } = await apiFetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+      });
+      if (ok) {
+        navigation.navigate('Login');
       } else {
-        const detail = Array.isArray(data.detail)
-          ? data.detail.map(d => d.msg || JSON.stringify(d)).join('\n')
-          : JSON.stringify(data);
-        setServerError(detail);
+        setServerError(result.detail || 'Error al registrar.');
       }
     } catch (e) {
-      setServerError('Error de red, inténtalo más tarde.');
+      setServerError('Error de red.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Registro de datos</Text>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}> 
+      <Text style={[styles.title, isDark && { color: '#8bc34a' }]}>Crear Cuenta</Text>
 
       <CustomInput
         label="Nombre de usuario"
@@ -123,10 +116,8 @@ const Register = ({ onBack }) => {
         <TouchableOpacity
           style={[
             styles.button,
-            {
-              backgroundColor: valid ? TITLE_COLOR : DISABLED_COLOR,
-              opacity: loading ? 0.7 : 1,
-            },
+            { backgroundColor: valid ? TITLE_COLOR : DISABLED_COLOR, opacity: loading ? 0.7 : 1 },
+            isDark && { backgroundColor: valid ? '#33691e' : '#607d8b' },
           ]}
           onPress={handleRegister}
           disabled={!valid || loading}
@@ -136,8 +127,8 @@ const Register = ({ onBack }) => {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.backLink}>
-          <Text style={styles.backButtonText}>Volver</Text>
+        <TouchableOpacity style={[styles.backLink, isDark && { backgroundColor: '#263238' }]} onPress={onBack || (() => navigation.goBack())}>
+          <Text style={[styles.backButtonText, isDark && { color: '#aed581' }]}>Volver</Text>
         </TouchableOpacity>
       </View>
     </View>

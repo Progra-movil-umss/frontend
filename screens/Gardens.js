@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CardGarden from '../components/CardGarden';
 import Svg, { Path } from 'react-native-svg';
-import { useFetch } from '../hooks/useFetch';
-import { useAuth } from '../AuthContext';
+import { apiFetch } from '../core/api';
+import { useAuth } from '../core/AuthContext';
 
 const EmptyStateIcon = () => (
   <Svg
@@ -27,20 +28,34 @@ const EmptyStateIcon = () => (
 
 const Gardens = ({ route, navigation }) => {
   const { accessToken } = useAuth(); 
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark'; 
 
-  const {
-    data,
-    loading,
-    error,
-    // cancelRequest, // Puedes usarlo si quieres agregar botón cancelar petición
-  } = useFetch('https://florafind-aau6a.ondigitalocean.app/gardens', accessToken);
-
-  const gardens = data?.items || [];
+  const [gardens, setGardens] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
     if (!accessToken) {
       Alert.alert('Error', 'No se ha encontrado el token de acceso');
+      setLoading(false);
+      return;
     }
+
+    const fetchGardens = async () => {
+      try {
+        const { data } = await apiFetch('/gardens', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setGardens(data.items || []);
+      } catch (e) {
+        setError('No se pudieron cargar los jardines');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGardens();
   }, [accessToken]);
 
   const handleCreateGarden = () => navigation.navigate('CreateGarden');
@@ -68,30 +83,35 @@ const Gardens = ({ route, navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tus Jardines</Text>
-
-      {gardens.length === 0 ? (
-        <View style={styles.emptyState}>
-          <EmptyStateIcon />
-          <Text style={styles.emptyText}>
-            Aún no tienes jardines añadidos crea uno para empezar
-          </Text>
-          <CardGarden gardens={[]} onCreatePress={handleCreateGarden} />
-        </View>
-      ) : (
-        <CardGarden
-          gardens={gardens}
-          onCreatePress={handleCreateGarden}
-          onGardenPress={handleGardenPress}
-        />
-      )}
-    </View>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <View style={[styles.container, isDark && { backgroundColor: '#111' }]}> 
+        <Text style={styles.title}>Tus Jardines</Text>
+        {gardens.length === 0 ? (
+          <View style={styles.emptyState}>
+            <EmptyStateIcon />
+            <Text style={styles.emptyText}>
+              Aún no tienes jardines añadidos crea uno para empezar
+            </Text>
+            <CardGarden gardens={[]} onCreatePress={handleCreateGarden} />
+          </View>
+        ) : (
+          <CardGarden
+            gardens={gardens}
+            onCreatePress={handleCreateGarden}
+            onGardenPress={handleGardenPress}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 40, paddingHorizontal: 16 },
+  safeArea: { flex: 1 },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
   title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 4, textAlign:"center" },
   subTitle: { fontSize: 14, fontWeight: '600', marginBottom: 12, color: '#333' },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },

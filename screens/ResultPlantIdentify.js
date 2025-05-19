@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, Image, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Image, StyleSheet, useColorScheme } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
 const TITLE_COLOR = '#4CAF50';
@@ -7,6 +7,9 @@ const TITLE_COLOR = '#4CAF50';
 export default function ResultPlantIdentify() {
   const route = useRoute();
   const result = route.params?.result;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   console.log('species', result.species);
 
   if (!result || !Array.isArray(result.results) || result.results.length === 0) {
@@ -18,8 +21,8 @@ export default function ResultPlantIdentify() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContent}>
-      <View style={styles.container}>
+    <ScrollView style={[styles.scrollViewContent, isDark && { backgroundColor: '#111' }]}>
+      <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
         <Text style={styles.title}>Resultados de la Identificación:</Text>
 
         {result.results.length > 0 && (

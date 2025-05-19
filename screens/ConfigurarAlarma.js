@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Platform, Vibration } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Platform, Vibration, useColorScheme } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CustomInput from '../components/CustomInput';
 import * as AlarmModule from 'expo-alarm-module';
@@ -55,6 +55,8 @@ const ConfigurarAlarma = ({ route, navigation }) => {
   const [saving, setSaving] = useState(false);
   const [reminderType, setReminderType] = useState('regar');
   const [invalidDateTime, setInvalidDateTime] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const pedirPermisos = async () => {
     let notifStatus = 'granted';
@@ -178,7 +180,7 @@ const ConfigurarAlarma = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}> 
       <Text style={styles.title}>Configurar recordatorio para {getAsociadosLabel()}</Text>
       <Text style={styles.sectionLabel}>Tipo de recordatorio</Text>
       <View style={styles.reminderTypeRow}>
