@@ -60,7 +60,7 @@ const Register = ({ onBack }) => {
   };
 
   return (
-    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}> 
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
       <Text style={[styles.title, isDark && { color: '#8bc34a' }]}>Crear Cuenta</Text>
 
       <CustomInput
@@ -153,14 +153,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   backLink: { alignItems: 'center', marginTop: 8, backgroundColor: '#e7f6e9', borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center' },
+    paddingVertical: 14},
   error: { color: 'red', fontSize: 12, marginTop: 8 },
   backButtonText: {
     color: '#54a468',
     fontWeight: 'bold',
   },
-  
+
 });
 
 export default Register;
