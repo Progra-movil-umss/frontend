@@ -3,8 +3,9 @@ import { View, TouchableOpacity, Image, Text, StyleSheet, Alert, ActivityIndicat
 import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import GalleryScreen from './GaleryScreen';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { apiFetch } from '../core/api';
 
 export default function CameraScreen({ onClose }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -18,7 +19,6 @@ export default function CameraScreen({ onClose }) {
   const [cameraKey, setCameraKey] = useState(0);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false); 
-  const { accessToken } = useAuth();
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -98,30 +98,24 @@ export default function CameraScreen({ onClose }) {
       });
     });
 
-    setIsLoading(true); 
-
+    setIsLoading(true);
 
     try {
-      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/plants/identify', {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-        },
-        body: formData
+      const { ok, data: result } = await apiFetch('/plants/identify', {
+        method: 'POST',
+        body: formData,
       });
-
-      if (response.ok) {
-        const result = await response.json();
+      if (ok) {
         console.log('Datos JSON: ', result);
         navigation.navigate('PlantResult', { result });
       } else {
-        alert("Error al identificar la planta.");
+        alert('Error al identificar la planta.');
       }
     } catch (error) {
-      console.error("Error al enviar las imágenes:", error);
-      alert("Ocurrió un error al identificar la planta. Verifica tu conexión e intenta de nuevo.");
+      console.error('Error al enviar las imágenes:', error);
+      alert('Ocurrió un error al identificar la planta. Verifica tu conexión e intenta de nuevo.');
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
