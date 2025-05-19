@@ -1,5 +1,4 @@
-// screens/PlantDetails.js
-import React from 'react';
+import {useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +12,30 @@ import { Ionicons } from '@expo/vector-icons';
 const defaultImgPlant = require('../assets/defaultPlant.png');
 
 const PlantDetails = ({ route, navigation }) => {
-  const { plant } = route.params;
+  const { plant: plantParam, refresh } = route.params;
+
+  // Estado local para poder actualizar la planta sin recargar toda la pantalla
+  const [plant, setPlant] = useState(plantParam);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('plantUpdated', (e) => {
+      const updatedPlant = e.data.plant;
+      setPlant(updatedPlant);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const goToEdit = () => {
+    navigation.navigate('EditPlant', {
+      plant,
+      onUpdate: (updatedPlant) => {
+        setPlant(updatedPlant);
+      },
+    });
+  };
+
+
   const imageUrl =
     plant.image_url && plant.image_url !== 'null'
       ? { uri: plant.image_url }
@@ -107,7 +129,7 @@ const PlantDetails = ({ route, navigation }) => {
           <TouchableOpacity
             style={[styles.button, styles.editButton]}
             activeOpacity={0.7}
-            onPress={() => { /* Aquí lógica futura para editar planta */ }}
+            onPress={goToEdit}
           >
             <Text style={styles.editButtonText}>Editar planta</Text>
           </TouchableOpacity>
