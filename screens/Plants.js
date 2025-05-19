@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../AuthContext';
@@ -5,11 +6,20 @@ import CardPlants from '../components/CardPlants';
 import { Ionicons } from '@expo/vector-icons';
 
 const Plants = ({ route, navigation }) => {
-  const { gardenId, gardenName } = route.params;
+  const { gardenId, gardenName, refresh } = route.params || {};
   const { accessToken } = useAuth();
+
+  const [reloadFlag, setReloadFlag] = useState(false);
 
   const url = `https://florafind-aau6a.ondigitalocean.app/gardens/${gardenId}/plants?limit=50&skip=0`;
   const { data, loading, error } = useFetch(url, accessToken);
+
+  useEffect(() => {
+    if (refresh) {
+      setReloadFlag((prev) => !prev); // Cambia estado para forzar recarga
+      navigation.setParams({ refresh: false }); // Quita flag para no refrescar otra vez
+    }
+  }, [refresh]);
 
   const plants = data?.items || [];
 

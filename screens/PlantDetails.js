@@ -1,4 +1,4 @@
-import {useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,25 +6,30 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../AuthContext';
 
 const defaultImgPlant = require('../assets/defaultPlant.png');
 
 const PlantDetails = ({ route, navigation }) => {
-  const { plant: plantParam, refresh } = route.params;
+  const { plant: plantParam } = route.params;
+  const { accessToken } = useAuth(); // Aquí se obtiene el token
 
   // Estado local para poder actualizar la planta sin recargar toda la pantalla
   const [plant, setPlant] = useState(plantParam);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('plantUpdated', (e) => {
-      const updatedPlant = e.data.plant;
-      setPlant(updatedPlant);
-    });
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('plantUpdated', (e) => {
+  //     const updatedPlant = e.data.plant;
+  //     setPlant(updatedPlant);
+  //   });
 
-    return unsubscribe;
-  }, [navigation]);
+  //   return unsubscribe;
+  // }, [navigation]);
 
   const goToEdit = () => {
     navigation.navigate('EditPlant', {
@@ -35,6 +40,54 @@ const PlantDetails = ({ route, navigation }) => {
     });
   };
 
+  // Función para eliminar planta
+  const handleDelete = () => {
+  Alert.alert(
+    'Confirmar eliminación',
+    `¿Deseas eliminar la planta "${plant.alias || 'sin nombre'}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          Alert.alert('Info', 'Eliminando planta...'); // Debug básico
+          try {
+            setLoadingDelete(true);
+            const response = await fetch(
+              `https://florafind-aau6a.ondigitalocean.app/gardens/plants/${plant.id}`,
+              {
+                method: 'DELETE',
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  Accept: 'application/json',
+                },
+              }
+            );
+            const data = await response.json();
+
+            if (response.ok) {
+              Alert.alert('Éxito', data.message || 'Planta eliminada correctamente', [
+                {
+                  text: 'Aceptar',
+                  onPress: () => {
+                    navigation.navigate('Plants', { refresh: true });
+                  },
+                },
+              ]);
+            } else {
+              throw new Error(data.detail || 'Error eliminando planta');
+            }
+          } catch (error) {
+            Alert.alert('Error', error.message || 'No se pudo eliminar la planta');
+          } finally {
+            setLoadingDelete(false);
+          }
+        },
+      },
+    ]
+  );
+};
 
   const imageUrl =
     plant.image_url && plant.image_url !== 'null'
@@ -137,9 +190,14 @@ const PlantDetails = ({ route, navigation }) => {
           <TouchableOpacity
             style={[styles.button, styles.deleteButton]}
             activeOpacity={0.7}
-            onPress={() => { /* Aquí lógica futura para eliminar planta */ }}
+            onPress={handleDelete}
+            disabled={loadingDelete}
           >
-            <Text style={styles.deleteButtonText}>Eliminar planta</Text>
+            {loadingDelete ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.deleteButtonText}>Eliminar planta</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -1,106 +1,119 @@
-import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  Modal,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import CardGarden from '../components/CardGarden';
-import Svg, { Path } from 'react-native-svg';
+import BottomSheetModal from '../components/BottomSheetModal';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../AuthContext';
-import BottomSheetModal from '../components/BottomSheetModal';
-import { useState } from 'react';
 
-const EmptyStateIcon = () => (
-  <Svg
-    width={64}
-    height={64}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#939393"
-    strokeWidth={2}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <Path d="M17 17v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-4h8" />
-    <Path d="M11.9 7.908a6 6 0 0 0-4.79-4.806" />
-    <Path d="M3 3v2a6 6 0 0 0 6 6h2" />
-    <Path d="M13.531 8.528A6 6 0 0 1 18 5h3v1a6 6 0 0 1-5.037 5.923" />
-    <Path d="M12 15v-3" />
-    <Path d="M3 3l18 18" />
-  </Svg>
-); 
+const Gardens = ({ navigation }) => {
+  const { accessToken } = useAuth();
 
-const Gardens = ({ route, navigation }) => {
-  const { accessToken } = useAuth(); 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedGarden, setSelectedGarden] = useState(null);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [reloadToggle, setReloadToggle] = useState(false); // Para forzar recarga manual
 
-  // Función para abrir modal con el jardín seleccionado
-  const openOptions = (garden) => {
-    setSelectedGarden(garden);
-    setModalVisible(true);
-  };
-
-  // Cerrar modal y limpiar jardín seleccionado
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedGarden(null);
-  };
-
-  // Funciones para cada acción del modal
-  const handleEdit = () => {
-    if (!selectedGarden) return;
-    navigation.navigate('CreateGarden', { gardenToEdit: selectedGarden });
-  };
-
-  const handleDelete = () => {
-    if (!selectedGarden) return;
-    closeModal();
-    Alert.alert(
-      'Confirmar eliminación',
-      `¿Estás seguro de eliminar el jardín "${selectedGarden.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', style: 'destructive', onPress: () => {
-            // TODO: lógica para eliminar el jardín vía API y actualizar lista
-            alert(`Eliminar jardín: ${selectedGarden.name}`);
-          }
-        },
-      ]
-    );
-  };
-
-  // Opciones del modal que pasaremos al componente
-  const modalOptions = [
-    { label: 'Editar', onPress: handleEdit },
-    { label: 'Eliminar', onPress: handleDelete, destructive: true },
-  ];
-  
-  const {
-    data,
-    loading,
-    error,
-    // cancelRequest, // Puedes usarlo si quieres agregar botón cancelar petición
-  } = useFetch('https://florafind-aau6a.ondigitalocean.app/gardens', accessToken);
+  // Cambiar URL para usar reloadToggle y forzar fetch nuevo
+  const { data, loading, error } = useFetch(
+    `https://florafind-aau6a.ondigitalocean.app/gardens?reload=${reloadToggle}`,
+    accessToken
+  );
 
   const gardens = data?.items || [];
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!accessToken) {
       Alert.alert('Error', 'No se ha encontrado el token de acceso');
     }
   }, [accessToken]);
 
-  const handleCreateGarden = () => navigation.navigate('CreateGarden');
+  const openOptions = (garden) => {
+    setSelectedGarden(garden);
+    setModalVisible(true);
+  };
 
-  // En Gardens.js reemplaza esta función:
+  const closeOptionsModal = () => {
+    setModalVisible(false);
+  };
+
+  const openConfirmDelete = () => {
+    setModalVisible(false);
+    setConfirmDeleteVisible(true);
+  };
+
+  const closeConfirmDelete = () => {
+    setConfirmDeleteVisible(false);
+    setSelectedGarden(null);
+  };
+
+  const handleDeleteGarden = async () => {
+    if (!selectedGarden) {
+      console.log('[DEBUG] No hay jardín seleccionado para eliminar');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch(
+        `https://florafind-aau6a.ondigitalocean.app/gardens/${selectedGarden.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || `Error al eliminar el jardín: ${response.status}`
+        );
+      }
+
+      const json = await response.json();
+
+      Alert.alert('Éxito', json.message || 'Jardín eliminado correctamente');
+
+      // Forzar recarga de jardines aumentando toggle
+      setReloadToggle((prev) => !prev);
+
+      setConfirmDeleteVisible(false);
+      setSelectedGarden(null);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Error al eliminar el jardín');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleEdit = () => {
+    if (!selectedGarden) return;
+    closeOptionsModal();
+    navigation.navigate('CreateGarden', { gardenToEdit: selectedGarden });
+  };
 
   const handleGardenPress = (garden) => {
-    console.log('Garden ID:', garden.id); // Verifica si el id se pasa correctamente
     navigation.navigate('Plants', {
       gardenId: garden.id,
       gardenName: garden.name,
     });
   };
 
-
+  const modalOptions = [
+    { label: 'Editar', onPress: handleEdit },
+    { label: 'Eliminar', onPress: openConfirmDelete, destructive: true },
+  ];
 
   if (loading) {
     return (
@@ -126,39 +139,133 @@ const Gardens = ({ route, navigation }) => {
 
       {gardens.length === 0 ? (
         <View style={styles.emptyState}>
-          <EmptyStateIcon />
           <Text style={styles.emptyText}>
-            Aún no tienes jardines añadidos crea uno para empezar
+            Aún no tienes jardines añadidos, crea uno para empezar
           </Text>
-          <CardGarden gardens={[]} onCreatePress={handleCreateGarden} />
+          <CardGarden gardens={[]} onCreatePress={() => navigation.navigate('CreateGarden')} />
         </View>
       ) : (
         <CardGarden
           gardens={gardens}
-          onCreatePress={handleCreateGarden}
+          onCreatePress={() => navigation.navigate('CreateGarden')}
           onGardenPress={handleGardenPress}
           onOptionsPress={openOptions}
         />
-        
       )}
+
       <BottomSheetModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={closeOptionsModal}
         title={selectedGarden ? selectedGarden.name : 'Opciones'}
         options={modalOptions}
       />
+
+      <Modal
+        visible={confirmDeleteVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeConfirmDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Confirmar eliminación</Text>
+            <Text style={styles.confirmMessage}>
+              ¿Estás seguro de eliminar el jardín{' '}
+              <Text style={{ fontWeight: 'bold' }}>{selectedGarden?.name}</Text>?
+            </Text>
+
+            {deleting ? (
+              <ActivityIndicator size="large" color="#4CAF50" style={{ marginVertical: 20 }} />
+            ) : (
+              <View style={styles.confirmButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={closeConfirmDelete}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.deleteButton]}
+                  onPress={handleDeleteGarden}
+                >
+                  <Text style={styles.deleteButtonText}>Eliminar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 40, paddingHorizontal: 16 },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 4, textAlign:"center" },
-  subTitle: { fontSize: 14, fontWeight: '600', marginBottom: 12, color: '#333' },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 12, textAlign: 'center' },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   emptyText: { marginTop: 12, fontSize: 16, color: '#939393', textAlign: 'center' },
   loadingText: { fontSize: 16, color: '#4CAF50', textAlign: 'center' },
   errorText: { fontSize: 16, color: 'red', textAlign: 'center' },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmModal: {
+    width: '85%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  confirmTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 16,
+    color: '#444',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  button: {
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    minWidth: 120,
+  },
+  cancelButton: {
+    backgroundColor: '#eee',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+  },
 });
 
 export default Gardens;

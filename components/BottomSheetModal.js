@@ -1,21 +1,50 @@
 // components/BottomSheetModal.js
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Pressable, Animated, Dimensions } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+  Dimensions,
+} from 'react-native';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const BottomSheetModal = ({ visible, onClose, title, options = [] }) => {
+  console.log('BottomSheetModal options:', options);
+
+  // Verificar que options sea iterable y convertir a array para evitar error
+  const safeOptions = Array.isArray(options) ? options : [];
+
+  // // Para debugging, render estático sin map (descomenta para probar)
+/*
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.container}>
         <Text style={styles.title}>{title}</Text>
-        {options.map(({ label, onPress, destructive }, i) => (
+        <TouchableOpacity style={styles.button} onPress={() => { safeOptions[0]?.onPress(); onClose(); }}>
+          <Text style={styles.buttonText}>{safeOptions[0]?.label || 'Opción 1'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.destructiveButton]} onPress={() => { safeOptions[1]?.onPress(); onClose(); }}>
+          <Text style={[styles.buttonText, styles.destructiveText]}>{safeOptions[1]?.label || 'Opción 2'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+          <Text style={styles.cancelText}>Cancelar</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+*/
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        {[...safeOptions].map(({ label, onPress, destructive }, i) => (
           <TouchableOpacity
             key={i}
             style={[styles.button, destructive && styles.destructiveButton]}
@@ -24,7 +53,9 @@ const BottomSheetModal = ({ visible, onClose, title, options = [] }) => {
               onClose();
             }}
           >
-            <Text style={[styles.buttonText, destructive && styles.destructiveText]}>{label}</Text>
+            <Text style={[styles.buttonText, destructive && styles.destructiveText]}>
+              {label}
+            </Text>
           </TouchableOpacity>
         ))}
         <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
@@ -67,17 +98,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    boxShadow: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        elevation: 6, // para Android
-    }
+    // boxShadow no existe en RN, eliminé para evitar conflictos
   },
   destructiveButton: {
     backgroundColor: '#ff0000',
-    borderRadius: 16
+    borderRadius: 16,
   },
   buttonText: {
     fontSize: 18,
@@ -85,7 +110,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   destructiveText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontWeight: 'bold',
   },
   cancelButton: {
