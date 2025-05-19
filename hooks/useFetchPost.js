@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { apiFetch } from '../core/api';
 
-export function useFetchPost(token) {
+export function useFetchPost() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,34 +12,17 @@ export function useFetchPost(token) {
     setData(null);
 
     try {
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-      };
-
-      if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
-      }
-
-      const response = await fetch(url, {
+      const options = {
         method: 'POST',
-        headers,
         body: isFormData ? bodyData : JSON.stringify(bodyData),
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        let json;
-        try {
-          json = JSON.parse(text);
-        } catch {
-          json = null;
-        }
-        throw { status: response.status, body: json || text };
+      };
+      if (!isFormData) {
+        options.headers = { 'Content-Type': 'application/json' };
       }
-
-      const json = await response.json();
-      setData(json);
-      return json;
+      const { ok, data: respData } = await apiFetch(url.replace(/^https?:\/\/[^/]+/, ''), options);
+      if (!ok) throw respData;
+      setData(respData);
+      return respData;
     } catch (err) {
       setError(err);
       throw err;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { apiFetch } from '../core/api';
 
-export function useFetch(url, token, options = {}) {
+export function useFetch(url, options = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,60 +13,32 @@ export function useFetch(url, token, options = {}) {
       setLoading(false);
       return;
     }
-    if (!token) {
-      setError('Token de autenticación no proporcionado');
-      setLoading(false);
-      return;
-    }
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
+    let cancelled = false;
     setLoading(true);
     setError(null);
     setData(null);
 
-    fetch(url, {
+    apiFetch(url.replace(/^https?:\/\/[^/]+/, ''), {
       ...options,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
-      signal: controller.signal,
+      signal: abortControllerRef.current?.signal,
     })
-      .then(async (response) => {
-        if (!response.ok) {
-          const text = await response.text();
-          let json;
-          try {
-            json = JSON.parse(text);
-          } catch {
-            json = null;
-          }
-          throw {
-            status: response.status,
-            statusText: response.statusText,
-            body: json || text,
-          };
-        }
-        return response.json();
+      .then(({ ok, data }) => {
+        if (!ok) throw data;
+        if (!cancelled) setData(data);
       })
-      .then(json => setData(json))
       .catch(err => {
-        if (err.name === 'AbortError') {
-          console.log('Petición cancelada');
-          setError('Petición cancelada');
-        } else {
-          setError(err);
-        }
+        if (!cancelled) setError(err);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
-      controller.abort();
+      cancelled = true;
+      if (abortControllerRef.current) abortControllerRef.current.abort();
     };
-  }, [url, token]);
+  }, [url, JSON.stringify(options)]);
 
   const cancelRequest = () => {
     if (abortControllerRef.current) {
