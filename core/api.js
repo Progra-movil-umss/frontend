@@ -2,6 +2,7 @@
 // Centraliza la URL base y helpers para llamadas a la API usando fetch puro y refresh automático
 
 import storage from './storage';
+import { tokenEvents } from './AuthContext';
 
 export const API_BASE_URL = 'https://florafind-aau6a.ondigitalocean.app';
 
@@ -22,10 +23,10 @@ const REFRESH_EXPIRY_KEY = 'flora_refresh_token_expiry';
 async function refreshTokenRequest() {
   const refreshToken = await storage.getItem(REFRESH_KEY);
   if (!refreshToken) throw new Error('No refresh token');
-  const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
+  // El backend espera el refresh_token como parámetro de query
+  const resp = await fetch(`${API_BASE_URL}/auth/refresh?refresh_token=${encodeURIComponent(refreshToken)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
   });
   if (!resp.ok) throw new Error('Refresh token inválido');
   const data = await resp.json();
@@ -39,6 +40,7 @@ async function refreshTokenRequest() {
     [REFRESH_KEY, data.refresh_token || refreshToken],
     [REFRESH_EXPIRY_KEY, refreshExpTime.toString()],
   ]);
+  tokenEvents.emit('tokenRefreshed'); // Notificar al contexto
   return data.access_token;
 }
 

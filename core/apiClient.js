@@ -3,6 +3,7 @@
 
 import axios from 'axios';
 import storage from './storage';
+import { tokenEvents } from './AuthContext';
 
 export const API_BASE_URL = 'https://florafind-aau6a.ondigitalocean.app';
 
@@ -59,9 +60,8 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = await storage.getItem('flora_refresh_token');
         if (!refreshToken) throw new Error('No refresh token');
-        const resp = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
+        // El backend espera el refresh_token como parámetro de query
+        const resp = await axios.post(`${API_BASE_URL}/auth/refresh?refresh_token=${encodeURIComponent(refreshToken)}`);
         const data = resp.data;
         const expiresIn = data.expires_in || 1800;
         const refreshExpiresIn = data.refresh_expires_in || 604800;
@@ -73,6 +73,7 @@ apiClient.interceptors.response.use(
           ['flora_refresh_token', data.refresh_token || refreshToken],
           ['flora_refresh_token_expiry', refreshExpTime.toString()],
         ]);
+        tokenEvents.emit('tokenRefreshed'); // Notificar al contexto
         processQueue(null, data.access_token);
         originalRequest.headers['Authorization'] = 'Bearer ' + data.access_token;
         return apiClient(originalRequest);
