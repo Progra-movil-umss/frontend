@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const defaultImage = require('../assets/defaultGarden1.png');
 
-const CardGarden = ({ gardens, onCreatePress, onGardenPress }) => {
+const CardGarden = ({ gardens, onCreatePress, onGardenPress, onOptionsPress  }) => {
   const renderGarden = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
@@ -39,7 +39,15 @@ const CardGarden = ({ gardens, onCreatePress, onGardenPress }) => {
           </Text>
         ) : null}
       </View>
-      <Ionicons name="ellipsis-vertical" size={20} color="#4CAF50" />
+      <TouchableOpacity
+        onPress={(e) => {
+          e.stopPropagation(); // Evitar que active el onPress principal del card
+          onOptionsPress && onOptionsPress(item);
+        }}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Área más cómoda para tocar
+      >
+        <Ionicons name="ellipsis-vertical" size={20} color="#4CAF50" />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 

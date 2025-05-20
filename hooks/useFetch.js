@@ -1,79 +1,50 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
-export function useFetch(url, token, options = {}) {
+export const useFetch = (url, token) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    if (!url) {
-      setError('URL no proporcionada');
-      setLoading(false);
-      return;
-    }
-    if (!token) {
-      setError('Token de autenticación no proporcionado');
-      setLoading(false);
-      return;
-    }
+    if (!url) return;
 
     const controller = new AbortController();
-    abortControllerRef.current = controller;
+    const signal = controller.signal;
 
-    setLoading(true);
-    setError(null);
-    setData(null);
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+          signal,
+        });
 
-    fetch(url, {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
-      signal: controller.signal,
-    })
-      .then(async (response) => {
         if (!response.ok) {
-          const text = await response.text();
-          let json;
-          try {
-            json = JSON.parse(text);
-          } catch {
-            json = null;
-          }
-          throw {
-            status: response.status,
-            statusText: response.statusText,
-            body: json || text,
-          };
+          throw new Error(`Error ${response.status}`);
         }
-        return response.json();
-      })
-      .then(json => setData(json))
-      .catch(err => {
-        if (err.name === 'AbortError') {
-          console.log('Petición cancelada');
-          setError('Petición cancelada');
-        } else {
-          setError(err);
-        }
-      })
-      .finally(() => setLoading(false));
 
-    return () => {
-      controller.abort();
+        const json = await response.json();
+        setData(json);
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          // La petición fue cancelada, no actualizamos el estado ni mostramos error
+          return;
+        }
+        setError(err.message || 'Error al cargar datos');
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchData();
+
+    // Cleanup: abortar fetch si cambia url o se desmonta el componente
+    return () => controller.abort();
   }, [url, token]);
 
-  const cancelRequest = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setError('Petición cancelada manualmente');
-      setLoading(false);
-    }
-  };
-
-  return { data, loading, error, cancelRequest };
-}
+  return { data, loading, error };
+};
