@@ -5,7 +5,6 @@ import { useAuth } from '../core/AuthContext';
 import { useFetch } from '../hooks/useFetch';
 import { useNavigation } from '@react-navigation/native';
 import { apiFetch } from '../core/api';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TITLE_COLOR = '#4CAF50';
 
@@ -27,28 +26,24 @@ const Home = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={[styles.container, isDark && { backgroundColor: '#111' }]}> 
-        <Text style={[styles.titleBlack, isDark && { color: '#fff' }]}>Bienvenido a </Text>
-        <Text style={[styles.titleGreen, isDark && { color: '#aed581' }]}>FloraFind</Text>
-        <Text style={[styles.subtitle, isDark && { color: '#bbb' }]}>Gestiona tus jardines, plantas y recordatorios de riego fácilmente.</Text>
-        <TouchableOpacity
-          style={styles.alarmButton}
-          onPress={() => navigation.navigate('Alarms')}
-        >
-          <Ionicons name="alarm-outline" size={28} color="#4CAF50" style={{ marginRight: 10 }} />
-          <Text style={styles.alarmButtonText}>Crear alarmas</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingHorizontal: 24 }]}> 
+      <Text style={[styles.titleBlack, isDark && { color: '#fff' }]}>Bienvenido a </Text>
+      <Text style={[styles.titleGreen, isDark && { color: '#aed581' }]}>FloraFind</Text>
+      <Text style={[styles.subtitle, isDark && { color: '#bbb' }]}>Gestiona tus jardines, plantas y recordatorios de riego fácilmente.</Text>
+      <TouchableOpacity
+        style={styles.alarmButton}
+        onPress={() => navigation.navigate('Alarms')}
+      >
+        <Ionicons name="alarm-outline" size={28} color="#4CAF50" style={{ marginRight: 10 }} />
+        <Text style={styles.alarmButtonText}>Crear alarmas</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
   container: {
     flex: 1,
-    padding: 16,
   },
   titleBlack: {
     fontSize: 30,

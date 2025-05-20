@@ -21,7 +21,10 @@ export default function ResultPlantIdentify() {
   }
 
   return (
-    <ScrollView style={[styles.scrollViewContent, isDark && { backgroundColor: '#111' }]}>
+    <ScrollView
+      style={[styles.scrollViewContent, isDark && { backgroundColor: '#111' }]}
+      contentContainerStyle={{ paddingBottom: 32 }}
+    >
       <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
         <Text style={styles.title}>Resultados de la Identificación:</Text>
 
@@ -63,10 +66,8 @@ export default function ResultPlantIdentify() {
           </View>
         )}
 
-        
         <Text style={styles.matchingPlantsText}>Plantas coincidentes:</Text>
 
-        
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -123,10 +124,10 @@ export default function ResultPlantIdentify() {
 
 const styles = StyleSheet.create({
   scrollViewContent: {
-    paddingBottom: 32,
+    // paddingBottom: 32, // Elimina padding aquí, ya está en contentContainerStyle
   },
   container: {
-    padding: 16,
+    // padding: 16, // Elimina padding aquí
   },
   scrollContainer: {
     flexDirection: 'row',
@@ -171,7 +172,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
 
-  
   matchingPlantsText: {
     fontSize: 18,
     color: TITLE_COLOR,

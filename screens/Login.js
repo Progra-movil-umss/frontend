@@ -79,10 +79,8 @@ const Login = () => {
 
   return (
     <View style={[styles.container, isDark && styles.dark]}> 
-      <Text style={[styles.title, isDark && styles.darkTitle]}>
-        Inicio de Sesión
-      </Text>
-
+      <Text style={[styles.welcome, isDark && styles.darkWelcome]}>Bienvenido a</Text>
+      <Text style={[styles.floraFind, isDark && styles.darkFloraFind]}>FloraFind</Text>
       <CustomInput
         label="Usuario"
         placeholder="Ingrese su usuario"
@@ -93,7 +91,6 @@ const Login = () => {
         }}
         error={touched.username ? errors.username : ''}
       />
-
       <CustomInput
         label="Contraseña"
         placeholder="Ingrese su contraseña"
@@ -160,7 +157,7 @@ const Login = () => {
 };
 
 const styles = StyleSheet.create({
-  container:      { flex: 1, padding: 16, justifyContent: 'center' },
+  container:      { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   title:          { fontSize: 32, fontWeight: 'bold', color: TITLE_COLOR, marginBottom: 24, textAlign: 'center' },
   row:            { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   rememberText:   { marginLeft: 8, color: '#333' },
@@ -223,13 +220,14 @@ const styles = StyleSheet.create({
   },
   textStyle:      { color: 'white', fontWeight: 'bold', textAlign: 'center' },
   modalText:      { marginBottom: 12, textAlign: 'center', color: '#333' },
+  welcome:        { fontSize: 22, fontWeight: 'bold', color: '#4CAF50', textAlign: 'center', marginBottom: 0 },
+  floraFind:      { fontSize: 32, fontWeight: 'bold', color: '#388e3c', textAlign: 'center', marginBottom: 18 },
+  darkWelcome:    { color: '#aed581' },
+  darkFloraFind:  { color: '#fff' },
 
   // Modo oscuro
   dark: {
     backgroundColor: '#111',
-  },
-  darkTitle: {
-    color: '#aed581',
   },
   darkRememberText: {
     color: '#bbb',

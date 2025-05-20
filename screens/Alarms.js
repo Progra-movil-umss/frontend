@@ -6,7 +6,6 @@ import * as AlarmModule from 'expo-alarm-module';
 import { useAuth } from '../core/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiFetch } from '../core/api';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Alarms = ({ navigation }) => {
   const { accessToken } = useAuth();
@@ -68,7 +67,7 @@ const Alarms = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, isDark && { backgroundColor: '#111' }]} edges={['top', 'left', 'right', 'bottom']}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
       <Text style={styles.title}>Selecciona uno o varios jardines</Text>
       {loading ? (
         <Text>Cargando jardines...</Text>
@@ -167,12 +166,12 @@ const Alarms = ({ navigation }) => {
           </View>
         </Modal>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  container: { flex: 1, /* padding: 16, */ backgroundColor: '#fff' },
   title: {
     fontSize: 22,
     fontWeight: 'bold',

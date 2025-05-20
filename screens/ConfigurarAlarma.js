@@ -180,7 +180,7 @@ const ConfigurarAlarma = ({ route, navigation }) => {
   };
 
   return (
-    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}> 
+    <View style={[styles.container, isDark && { backgroundColor: '#111', alignItems: 'center' }]}> 
       <Text style={styles.title}>Configurar recordatorio para {getAsociadosLabel()}</Text>
       <Text style={styles.sectionLabel}>Tipo de recordatorio</Text>
       <View style={styles.reminderTypeRow}>
@@ -275,7 +275,7 @@ const ConfigurarAlarma = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16, alignItems: 'center' },
+  container: { flex: 1, /* padding: 16, */ backgroundColor: '#fff', alignItems: 'center' },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: '#4CAF50', textAlign: 'center' },
   sectionLabel: { fontWeight: 'bold', fontSize: 16, marginTop: 18, marginBottom: 8, color: '#4CAF50' },
   daysRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 10 },

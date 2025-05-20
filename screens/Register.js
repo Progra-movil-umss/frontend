@@ -61,8 +61,6 @@ const Register = ({ onBack }) => {
 
   return (
     <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
-      <Text style={[styles.title, isDark && { color: '#8bc34a' }]}>Crear Cuenta</Text>
-
       <CustomInput
         label="Nombre de usuario"
         placeholder="Ingrese su nombre de usuario"
@@ -136,7 +134,7 @@ const Register = ({ onBack }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, justifyContent: 'center' },
+  container: { flex: 1, justifyContent: 'center' },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
