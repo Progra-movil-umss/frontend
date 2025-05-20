@@ -60,7 +60,7 @@ const Register = ({ onBack }) => {
   };
 
   return (
-    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingHorizontal: 24 }]}>
       <CustomInput
         label="Nombre de usuario"
         placeholder="Ingrese su nombre de usuario"
