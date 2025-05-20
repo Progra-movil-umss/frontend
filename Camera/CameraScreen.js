@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../core/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { apiFetch } from '../core/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CameraScreen({ onClose }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -120,16 +121,14 @@ export default function CameraScreen({ onClose }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container}> 
       {showGallery ? (
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
-
           {permission?.granted && isCameraReady && (
             <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
               <View style={styles.topBar}>
-
                 <TouchableOpacity onPress={toggleFlash}>
                   <Image
                     source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
@@ -140,10 +139,8 @@ export default function CameraScreen({ onClose }) {
                   <Image source={require('../assets/close.png')} style={styles.icon} />
                 </TouchableOpacity>
               </View>
-
             </CameraView>
           )}
-
           <View style={styles.bottomBar}>
             <TouchableOpacity
               onPress={takePhoto}
@@ -153,7 +150,6 @@ export default function CameraScreen({ onClose }) {
               <Image source={require('../assets/shutter.png')} style={styles.shutterIcon} />
             </TouchableOpacity>
           </View>
-
           {lastPhoto && (
             <TouchableOpacity
               style={styles.thumbnailContainer}
@@ -162,7 +158,6 @@ export default function CameraScreen({ onClose }) {
               <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
             </TouchableOpacity>
           )}
-
           <TouchableOpacity
             style={styles.sendButton}
             onPress={handleSendPhotos}
@@ -170,7 +165,6 @@ export default function CameraScreen({ onClose }) {
           >
             <Text style={styles.sendButtonText}>Identificar</Text>
           </TouchableOpacity>
-
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#ffffff" />
