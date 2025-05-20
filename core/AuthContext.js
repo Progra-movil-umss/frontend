@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import storage from './storage';
 import { API_BASE_URL } from './api';
+import * as SecureStore from 'expo-secure-store';
 
 export const AuthContext = createContext();
 
@@ -95,7 +96,14 @@ export const AuthProvider = ({ children }) => {
     setTokenExpiry(null);
     setRefreshToken(null);
     setRefreshExpiry(null);
-    await storage.multiRemove([TOKEN_KEY, EXPIRY_KEY, REFRESH_KEY, REFRESH_EXPIRY_KEY]);
+    try {
+      await storage.multiRemove([
+        TOKEN_KEY,
+        EXPIRY_KEY,
+        REFRESH_KEY,
+        REFRESH_EXPIRY_KEY,
+      ]);
+    } catch {}
   };
 
   // Función para refrescar el token proactivamente
@@ -146,7 +154,7 @@ export const AuthProvider = ({ children }) => {
   }, [tokenExpiry]);
 
   return (
-    <AuthContext.Provider value={{ accessToken, refreshToken, login, logout, loading }}>
+    <AuthContext.Provider value={{ accessToken, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
