@@ -26,7 +26,7 @@ const Home = () => {
   );
 
   return (
-    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingHorizontal: 24 }]}> 
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingHorizontal: 24 }, { paddingTop: 50 }]}>
       <Text style={[styles.titleBlack, isDark && { color: '#fff' }]}>Bienvenido a </Text>
       <Text style={[styles.titleGreen, isDark && { color: '#aed581' }]}>FloraFind</Text>
       <Text style={[styles.subtitle, isDark && { color: '#bbb' }]}>Gestiona tus jardines, plantas y recordatorios de riego fácilmente.</Text>

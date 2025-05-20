@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useFetch } from '../hooks/useFetch';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 import CardPlants from '../components/CardPlants';
 import { Ionicons } from '@expo/vector-icons';
 
