@@ -1,51 +1,45 @@
 import { useState } from 'react';
+import { useAuth } from '../AuthContext';
 
 export function useFetchPost(token) {
-  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const post = async (url, bodyData, isFormData = false) => {
+  const post = async (url, body, isFormData = false, method = 'POST') => {
     setLoading(true);
     setError(null);
-    setData(null);
 
     try {
-      const headers = {
-        'Authorization': `Bearer ${token}`,
+      const headers = new Headers();
+      if (!isFormData) {
+        headers.append('Content-Type', 'application/json');
+      }
+      if (token) {
+        headers.append('Authorization', `Bearer ${token}`);
+      }
+
+      const options = {
+        method,
+        headers,
+        body: isFormData ? body : JSON.stringify(body),
       };
 
-      if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
-      }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: isFormData ? bodyData : JSON.stringify(bodyData),
-      });
+      const response = await fetch(url, options);
 
       if (!response.ok) {
-        const text = await response.text();
-        let json;
-        try {
-          json = JSON.parse(text);
-        } catch {
-          json = null;
-        }
-        throw { status: response.status, body: json || text };
+        const errorBody = await response.json().catch(() => null);
+        throw { status: response.status, body: errorBody };
       }
 
-      const json = await response.json();
-      setData(json);
-      return json;
+      const data = await response.json();
+      setLoading(false);
+      return data;
     } catch (err) {
       setError(err);
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
-  return { data, loading, error, post };
+  return { loading, error, post };
 }
