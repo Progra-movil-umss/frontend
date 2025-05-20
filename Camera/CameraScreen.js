@@ -3,8 +3,10 @@ import { View, TouchableOpacity, Image, Text, StyleSheet, Alert, ActivityIndicat
 import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import GalleryScreen from './GaleryScreen';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { apiFetch } from '../core/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CameraScreen({ onClose }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -18,7 +20,6 @@ export default function CameraScreen({ onClose }) {
   const [cameraKey, setCameraKey] = useState(0);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false); 
-  const { accessToken } = useAuth();
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -98,44 +99,36 @@ export default function CameraScreen({ onClose }) {
       });
     });
 
-    setIsLoading(true); 
-
+    setIsLoading(true);
 
     try {
-      const response = await fetch('https://florafind-aau6a.ondigitalocean.app/plants/identify', {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-        },
-        body: formData
+      const { ok, data: result } = await apiFetch('/plants/identify', {
+        method: 'POST',
+        body: formData,
       });
-
-      if (response.ok) {
-        const result = await response.json();
+      if (ok) {
         console.log('Datos JSON: ', result);
         navigation.navigate('PlantResult', { result });
       } else {
-        alert("Error al identificar la planta.");
+        alert('Error al identificar la planta.');
       }
     } catch (error) {
-      console.error("Error al enviar las imágenes:", error);
-      alert("Ocurrió un error al identificar la planta. Verifica tu conexión e intenta de nuevo.");
+      console.error('Error al enviar las imágenes:', error);
+      alert('Ocurrió un error al identificar la planta. Verifica tu conexión e intenta de nuevo.');
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container}> 
       {showGallery ? (
         <GalleryScreen photos={photos} onClose={() => setShowGallery(false)} onDelete={handleDeletePhoto} />
       ) : (
         <>
-
           {permission?.granted && isCameraReady && (
             <CameraView style={styles.camera} facing={facing} flash={flash} ref={cameraRef}>
               <View style={styles.topBar}>
-
                 <TouchableOpacity onPress={toggleFlash}>
                   <Image
                     source={flash === 'on' ? require('../assets/flash.png') : require('../assets/flash_off.png')}
@@ -146,10 +139,8 @@ export default function CameraScreen({ onClose }) {
                   <Image source={require('../assets/close.png')} style={styles.icon} />
                 </TouchableOpacity>
               </View>
-
             </CameraView>
           )}
-
           <View style={styles.bottomBar}>
             <TouchableOpacity
               onPress={takePhoto}
@@ -159,7 +150,6 @@ export default function CameraScreen({ onClose }) {
               <Image source={require('../assets/shutter.png')} style={styles.shutterIcon} />
             </TouchableOpacity>
           </View>
-
           {lastPhoto && (
             <TouchableOpacity
               style={styles.thumbnailContainer}
@@ -168,7 +158,6 @@ export default function CameraScreen({ onClose }) {
               <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
             </TouchableOpacity>
           )}
-
           <TouchableOpacity
             style={styles.sendButton}
             onPress={handleSendPhotos}
@@ -176,7 +165,6 @@ export default function CameraScreen({ onClose }) {
           >
             <Text style={styles.sendButtonText}>Identificar</Text>
           </TouchableOpacity>
-
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#ffffff" />

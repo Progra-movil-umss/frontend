@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useAuth } from '../AuthContext';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, useColorScheme } from 'react-native';
+import { useAuth } from '../core/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PlantasDelJardin = ({ route, navigation }) => {
   const { garden } = route.params;
@@ -8,6 +9,9 @@ const PlantasDelJardin = ({ route, navigation }) => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlants, setSelectedPlants] = useState([]);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchPlants = async () => {
@@ -48,7 +52,7 @@ const PlantasDelJardin = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingTop: insets.top }]}> 
       <Text style={styles.title}>Plantas de {garden.name}</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#4CAF50" />
@@ -67,7 +71,11 @@ const PlantasDelJardin = ({ route, navigation }) => {
                 onPress={() => handlePlantPress(item)}
                 onLongPress={() => handlePlantLongPress(item)}
               >
-                <Image source={{ uri: item.image_url }} style={styles.plantImage} />
+                {item.image_url ? (
+                  <Image source={{ uri: item.image_url }} style={styles.plantImage} />
+                ) : (
+                  <Image source={require('../assets/defaultPlant.png')} style={styles.plantImage} />
+                )}
                 <Text style={styles.plantName}>{item.alias || item.scientific_name_without_author}</Text>
                 <Text style={styles.plantDesc}>{item.common_names?.join(', ')}</Text>
                 {selectedPlants.some(p => p.id === item.id) && (
@@ -104,7 +112,7 @@ const PlantasDelJardin = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flex: 1, /* padding: 16, */ backgroundColor: '#fff' },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#4CAF50' },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   plantItem: { flex: 1, backgroundColor: '#e7f6e9', borderRadius: 10, padding: 10, margin: 4, alignItems: 'center', maxWidth: '48%' },

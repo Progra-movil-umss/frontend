@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, Image, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Image, StyleSheet, useColorScheme } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
 const TITLE_COLOR = '#4CAF50';
@@ -7,6 +7,9 @@ const TITLE_COLOR = '#4CAF50';
 export default function ResultPlantIdentify() {
   const route = useRoute();
   const result = route.params?.result;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   console.log('species', result.species);
 
   if (!result || !Array.isArray(result.results) || result.results.length === 0) {
@@ -18,8 +21,11 @@ export default function ResultPlantIdentify() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContent}>
-      <View style={styles.container}>
+    <ScrollView
+      style={[styles.scrollViewContent, isDark && { backgroundColor: '#111' }]}
+      contentContainerStyle={{ paddingBottom: 32 }}
+    >
+      <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
         <Text style={styles.title}>Resultados de la Identificación:</Text>
 
         {result.results.length > 0 && (
@@ -60,10 +66,8 @@ export default function ResultPlantIdentify() {
           </View>
         )}
 
-        
         <Text style={styles.matchingPlantsText}>Plantas coincidentes:</Text>
 
-        
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -120,10 +124,10 @@ export default function ResultPlantIdentify() {
 
 const styles = StyleSheet.create({
   scrollViewContent: {
-    paddingBottom: 32,
+    // paddingBottom: 32, // Elimina padding aquí, ya está en contentContainerStyle
   },
   container: {
-    padding: 16,
+    // padding: 16, // Elimina padding aquí
   },
   scrollContainer: {
     flexDirection: 'row',
@@ -168,7 +172,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
 
-  
   matchingPlantsText: {
     fontSize: 18,
     color: TITLE_COLOR,

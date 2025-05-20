@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Modal, Pressable, ActivityIndicator} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Modal, Pressable, ActivityIndicator, useColorScheme} from 'react-native';
 import CustomInput from '../components/CustomInput';
 import Checkbox from '../components/Checkbox';
 import { useNavigation } from '@react-navigation/native';
 import { useContext } from 'react';
-import { AuthContext } from '../AuthContext'; 
+import { AuthContext } from '../core/AuthContext'; 
+import { apiFetch } from '../core/api';
 
 
 
@@ -15,6 +16,8 @@ const DISABLED_COLOR = '#81C784';
 
 const Login = () => {
   const navigation = useNavigation();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -41,39 +44,30 @@ const Login = () => {
     setLoading(true);
     setModalMessage('');
     try {
-      const resp = await fetch(
-        'https://florafind-aau6a.ondigitalocean.app/auth/token',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username_or_email: username,
-            password,
-          }),
-        }
-      );
-
-      const text = await resp.text();
-      let data;
-      try { data = JSON.parse(text); } catch { data = null; }
-      
-      console.log("Respuesta completa:", text); // Ver la respuesta cruda del servidor
-      console.log("Objeto JSON:", data); // Ver el objeto JSON después de parsearlo
-      console.log("Access Token recibido:", data?.access_token); // Ver si el token existe
-
-
-      if (!resp.ok) {
+      const { data, ok } = await apiFetch('/auth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username_or_email: username,
+          password,
+        }),
+      });
+      const text = JSON.stringify(data);
+      if (!ok) {
         const detail = Array.isArray(data?.detail)
           ? data.detail.map(d => d.msg || JSON.stringify(d)).join('\n')
           : text || 'Error desconocido';
         setModalMessage(detail);
         setModalVisible(true);
       } else {
-        // Navega a Home pasando el token
-        console.log("Navegando a Home con accessToken:", data.access_token);
-        login(data.access_token, data.expires_in); // Guarda token en contexto
-        navigation.replace('Home');                
-
+        // Guardar ambos tokens y expiraciones
+        await login(
+          data.access_token,
+          data.expires_in || 1800,
+          data.refresh_token,
+          data.refresh_expires_in || 604800
+        );
+        navigation.replace('Home');
       }
     } catch (e) {
       setModalMessage('Error de red, inténtalo más tarde.');
@@ -84,28 +78,9 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Modal
-        animationType="fade"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>{modalMessage}</Text>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.textStyle}>Cerrar</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      <Text style={styles.title}>Inicio de Sesión</Text>
-
+    <View style={[styles.container, isDark && styles.dark]}> 
+      <Text style={[styles.welcome, isDark && styles.darkWelcome]}>Bienvenido a</Text>
+      <Text style={[styles.floraFind, isDark && styles.darkFloraFind]}>FloraFind</Text>
       <CustomInput
         label="Usuario"
         placeholder="Ingrese su usuario"
@@ -116,7 +91,6 @@ const Login = () => {
         }}
         error={touched.username ? errors.username : ''}
       />
-
       <CustomInput
         label="Contraseña"
         placeholder="Ingrese su contraseña"
@@ -131,10 +105,10 @@ const Login = () => {
 
       <View style={styles.row}>
         <Checkbox checked={remember} onToggle={() => setRemember(r => !r)} />
-        <Text style={styles.rememberText}>Recordar contraseña</Text>
+        <Text style={[styles.rememberText, isDark && styles.darkRememberText]}>Recordar contraseña</Text>
       </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')}>
+      <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')} style={{ alignSelf: 'flex-start' }}>
         <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
 
@@ -153,27 +127,70 @@ const Login = () => {
           ? <ActivityIndicator color="#fff" />
           : <Text style={styles.buttonText}>Iniciar Sesión</Text>}
       </TouchableOpacity>
-
       <TouchableOpacity
         style={[styles.button, { backgroundColor: TITLE_COLOR }]}
         onPress={() => navigation.navigate('Register')}
       >
         <Text style={styles.buttonText}>Crear cuenta</Text>
       </TouchableOpacity>
-      
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, isDark && styles.modalViewDark]}>
+            <Text style={[styles.modalText, isDark && styles.darkModalText]}>{modalMessage}</Text>
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.textStyle}>Cerrar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container:      { flex: 1, padding: 16, justifyContent: 'center' },
+  container:      { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   title:          { fontSize: 32, fontWeight: 'bold', color: TITLE_COLOR, marginBottom: 24, textAlign: 'center' },
   row:            { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  rememberText:   { marginLeft: 8 },
-  forgot:         { color: '#2196F3', marginVertical: 12, textAlign: 'right' },
-  button:         { paddingVertical: 14, borderRadius: 8, marginBottom: 12, alignItems: 'center' },
-  buttonText:     { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-
+  rememberText:   { marginLeft: 8, color: '#333' },
+  forgot: {
+    color: '#1976d2', // Azul para diferenciarlo de los botones verdes
+    marginVertical: 0,
+    textAlign: 'left',
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 18,
+    marginTop: 2,
+    alignSelf: 'flex-start',
+    textDecorationLine: 'underline',
+    letterSpacing: 0.2,
+  },
+  button: {
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginBottom: 12,
+    alignItems: 'center',
+    backgroundColor: TITLE_COLOR, // Verde siempre, sin importar el modo
+  },
+  buttonDisabled: {
+    backgroundColor: '#607d8b', // Verde apagado para deshabilitado
+  },
+  buttonActive: {
+    backgroundColor: TITLE_COLOR, // Verde normal para activo
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   centeredView:   {
     flex: 1,
     justifyContent: 'center',
@@ -191,6 +208,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  modalViewDark: {
+    backgroundColor: '#222',
+  },
   buttonClose:    {
     backgroundColor: '#2196F3',
     paddingVertical: 10,
@@ -199,7 +219,25 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   textStyle:      { color: 'white', fontWeight: 'bold', textAlign: 'center' },
-  modalText:      { marginBottom: 12, textAlign: 'center' },
+  modalText:      { marginBottom: 12, textAlign: 'center', color: '#333' },
+  welcome:        { fontSize: 22, fontWeight: 'bold', color: '#4CAF50', textAlign: 'center', marginBottom: 0 },
+  floraFind:      { fontSize: 32, fontWeight: 'bold', color: '#388e3c', textAlign: 'center', marginBottom: 18 },
+  darkWelcome:    { color: '#aed581' },
+  darkFloraFind:  { color: '#fff' },
+
+  // Modo oscuro
+  dark: {
+    backgroundColor: '#111',
+  },
+  darkRememberText: {
+    color: '#bbb',
+  },
+  darkForgot: {
+    color: '#90caf9',
+  },
+  darkModalText: {
+    color: '#eee',
+  },
 });
 
 export default Login;

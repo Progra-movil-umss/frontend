@@ -7,24 +7,48 @@ import {
   Modal,
   TouchableOpacity,
   ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import CardGarden from '../components/CardGarden';
 import BottomSheetModal from '../components/BottomSheetModal';
 import { useFetch } from '../hooks/useFetch';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 
-const Gardens = ({ navigation }) => {
+const EmptyStateIcon = () => (
+  <Svg
+    width={64}
+    height={64}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="#939393"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <Path d="M17 17v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-4h8" />
+    <Path d="M11.9 7.908a6 6 0 0 0-4.79-4.806" />
+    <Path d="M3 3v2a6 6 0 0 0 6 6h2" />
+    <Path d="M13.531 8.528A6 6 0 0 1 18 5h3v1a6 6 0 0 1-5.037 5.923" />
+    <Path d="M12 15v-3" />
+    <Path d="M3 3l18 18" />
+  </Svg>
+);
+
+const Gardens = ({ navigation, route }) => {
   const { accessToken } = useAuth();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedGarden, setSelectedGarden] = useState(null);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [reloadToggle, setReloadToggle] = useState(false); // Para forzar recarga manual
+  const [reloadToggle, setReloadToggle] = useState(false);
+  const [confirmEditVisible, setConfirmEditVisible] = useState(false);
 
-   const [confirmEditVisible, setConfirmEditVisible] = useState(false); 
-
-  // Cambiar URL para usar reloadToggle y forzar fetch nuevo
   const { data, loading, error } = useFetch(
     `https://florafind-aau6a.ondigitalocean.app/gardens?reload=${reloadToggle}`,
     accessToken
@@ -35,7 +59,24 @@ const Gardens = ({ navigation }) => {
   useEffect(() => {
     if (!accessToken) {
       Alert.alert('Error', 'No se ha encontrado el token de acceso');
+      setLoading(false);
+      return;
     }
+
+    const fetchGardens = async () => {
+      try {
+        const { data } = await apiFetch('/gardens', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setGardens(data.items || []);
+      } catch (e) {
+        setError('No se pudieron cargar los jardines');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGardens();
   }, [accessToken]);
 
   useEffect(() => {
@@ -158,9 +199,8 @@ const Gardens = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingTop: insets.top }]}> 
       <Text style={styles.title}>Tus Jardines</Text>
-
       {gardens.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
@@ -254,8 +294,11 @@ const Gardens = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 40, paddingHorizontal: 16 },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 12, textAlign: 'center' },
+  container: {
+    flex: 1,
+  },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 4, textAlign:"center" },
+  subTitle: { fontSize: 14, fontWeight: '600', marginBottom: 12, color: '#333' },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   emptyText: { marginTop: 12, fontSize: 16, color: '#939393', textAlign: 'center' },
   loadingText: { fontSize: 16, color: '#4CAF50', textAlign: 'center' },

@@ -1,69 +1,119 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, useColorScheme, ActivityIndicator, Modal, Pressable } from 'react-native';
+import CustomInput from '../components/CustomInput';
+import { apiFetch } from '../core/api';
 
 export default function PasswordRecoveryScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [valid, setValid] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
-  const API_URL = 'https://florafind-aau6a.ondigitalocean.app/auth/password-reset-request';
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Validar email reactivo
+  React.useEffect(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setValid(emailRegex.test(email));
+    setErrorMsg('');
+    setSuccess(false);
+  }, [email]);
 
   const handleSubmit = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Por favor, introduce tu correo electrónico.');
-      return;
-    }
-
+    if (!valid) return;
     setLoading(true);
+    setSuccess(false);
+    setErrorMsg('');
     try {
-      const response = await fetch(API_URL, {
+      const { data: result, ok } = await apiFetch('/auth/password-reset-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email }),
       });
-
-      const result = await response.json();
-      console.log(result);
-
-      if (response.ok) {
-        Alert.alert('Éxito', 'Se envio solicitud de recuperacion de contraseña a tu correo.');
+      let apiMessage = '';
+      if (ok) {
+        apiMessage = result.message || '¡Solicitud enviada! Revisa tu correo electrónico.';
+        setSuccess(true);
+        setModalMessage(apiMessage);
+        setModalVisible(true);
       } else {
-        Alert.alert('Error', result.message || 'Algo salió mal.');
+        if (result.detail) {
+          if (Array.isArray(result.detail)) {
+            apiMessage = result.detail.map(d => d.msg || JSON.stringify(d)).join('\n');
+          } else {
+            apiMessage = result.detail;
+          }
+        } else {
+          apiMessage = 'Algo salió mal.';
+        }
+        setModalMessage(apiMessage);
+        setModalVisible(true);
       }
     } catch (error) {
-      Alert.alert('Error', 'Error de red o del servidor.');
+      setModalMessage('Error de red o del servidor.');
+      setModalVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recuperar contraseña</Text>
-      <Text style={styles.subtitle}>
-        Introduce tu correo electrónico para
-        restablecer tu contraseña.
-      </Text>
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    if (success) {
+      navigation.replace('Login');
+    }
+  };
 
-      <Text style={styles.label}>Correo electrónico</Text>
-      <TextInput
-        style={styles.input}
+  return (
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
+      <Text style={[styles.title, isDark && { color: '#8bc34a' }]}>Recuperar contraseña</Text>
+      <Text style={[styles.subtitle, isDark && { color: '#bbb' }]}>
+        Introduce tu correo electrónico para restablecer tu contraseña.
+      </Text>
+      <CustomInput
+        label="Correo electrónico"
         placeholder="Ingrese su correo electrónico"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
-        autoCapitalize="none"
+        error={''}
       />
-
-      <TouchableOpacity style={styles.sendButton} onPress={handleSubmit} disabled={loading}>
-        <Text style={styles.sendButtonText}>Enviar</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation?.goBack()}
+        style={[
+          styles.sendButton,
+          { backgroundColor: valid ? '#4CAF50' : '#81C784', opacity: loading ? 0.6 : 1 },
+        ]}
+        onPress={handleSubmit}
+        disabled={!valid || loading}
       >
-        <Text style={styles.backButtonText}>Volver</Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.sendButtonText}>Enviar</Text>
+        )}
       </TouchableOpacity>
+      <Modal
+        animationType="fade"
+        transparent
+        visible={modalVisible}
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, isDark && styles.modalViewDark]}>
+            <Text style={[styles.modalText, isDark && styles.darkModalText]}>{modalMessage}</Text>
+            <Pressable
+              style={[styles.sendButton, { backgroundColor: '#388e3c', marginBottom: 0, minWidth: 120 }]}
+              onPress={handleCloseModal}
+            >
+              <Text style={[styles.sendButtonText, { fontSize: 16 }]}>Cerrar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -71,7 +121,6 @@ export default function PasswordRecoveryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
     justifyContent: 'center',
     backgroundColor: '#fff',
   },
@@ -85,19 +134,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     color: '#333',
   },
-  label: {
-    fontWeight: 'bold',
-    marginBottom: 6,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 20,
-    backgroundColor: '#F9F9F9',
-  },
   sendButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 10,
@@ -109,14 +145,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  backButton: {
-    backgroundColor: '#e7f6e9',
-    borderRadius: 10,
-    paddingVertical: 14,
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  backButtonText: {
-    color: '#54a468',
-    fontWeight: 'bold',
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#333',
+  },
+  darkModalText: {
+    color: '#fff',
+  },
+  modalViewDark: {
+    backgroundColor: '#222',
+    borderColor: '#444',
+    borderWidth: 1,
   },
 });

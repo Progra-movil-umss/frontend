@@ -1,50 +1,52 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { apiFetch } from '../core/api';
 
-export const useFetch = (url, token) => {
+export function useFetch(url, options = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    if (!url) return;
+    if (!url) {
+      setError('URL no proporcionada');
+      setLoading(false);
+      return;
+    }
 
-    const controller = new AbortController();
-    const signal = controller.signal;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setData(null);
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-          signal,
-        });
+    apiFetch(url.replace(/^https?:\/\/[^/]+/, ''), {
+      ...options,
+      signal: abortControllerRef.current?.signal,
+    })
+      .then(({ ok, data }) => {
+        if (!ok) throw data;
+        if (!cancelled) setData(data);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}`);
-        }
-
-        const json = await response.json();
-        setData(json);
-      } catch (err) {
-        if (err.name === 'AbortError') {
-          // La petición fue cancelada, no actualizamos el estado ni mostramos error
-          return;
-        }
-        setError(err.message || 'Error al cargar datos');
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      cancelled = true;
+      if (abortControllerRef.current) abortControllerRef.current.abort();
     };
+  }, [url, JSON.stringify(options)]);
 
-    fetchData();
+  const cancelRequest = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setError('Petición cancelada manualmente');
+      setLoading(false);
+    }
+  };
 
-    // Cleanup: abortar fetch si cambia url o se desmonta el componente
-    return () => controller.abort();
-  }, [url, token]);
-
-  return { data, loading, error };
-};
+  return { data, loading, error, cancelRequest };
+}

@@ -7,12 +7,13 @@ import {
   Alert,
   Modal,
   Image,
+  useColorScheme,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import CustomInput from '../components/CustomInput';
 import { useFetchPost } from '../hooks/useFetchPost';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 import { useFetchPut } from '../hooks/useFetchPut';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -40,6 +41,9 @@ const CreateGarden = ({ route, navigation }) => {
       setImage(gardenToEdit.image_url || null);
     }
   }, [gardenToEdit]);
+
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const validateImageSize = async (uri) => {
     try {
@@ -207,11 +211,10 @@ const CreateGarden = ({ route, navigation }) => {
 
   const loading = loadingPost || loadingPut;
   const error = postError || putError;
-
+  
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
       <Text style={styles.title}>{gardenToEdit ? 'Editar Jardín' : 'Nuevo Jardín'}</Text>
-
       <CustomInput
         label="Nombre del Jardín"
         placeholder="Ingrese el nombre del jardín"
@@ -305,7 +308,7 @@ const CreateGarden = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, justifyContent: 'center' },
+  container: { flex: 1, justifyContent: 'center' },
   title: {
     fontSize: 28,
     fontWeight: 'bold',

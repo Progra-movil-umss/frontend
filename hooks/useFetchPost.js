@@ -1,45 +1,35 @@
 import { useState } from 'react';
-import { useAuth } from '../AuthContext';
+import { apiFetch } from '../core/api';
 
-export function useFetchPost(token) {
+export function useFetchPost() {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const post = async (url, body, isFormData = false, method = 'POST') => {
+  const post = async (url, bodyData, isFormData = false) => {
     setLoading(true);
     setError(null);
+    setData(null);
 
     try {
-      const headers = new Headers();
-      if (!isFormData) {
-        headers.append('Content-Type', 'application/json');
-      }
-      if (token) {
-        headers.append('Authorization', `Bearer ${token}`);
-      }
-
       const options = {
-        method,
-        headers,
-        body: isFormData ? body : JSON.stringify(body),
+        method: 'POST',
+        body: isFormData ? bodyData : JSON.stringify(bodyData),
       };
-
-      const response = await fetch(url, options);
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw { status: response.status, body: errorBody };
+      if (!isFormData) {
+        options.headers = { 'Content-Type': 'application/json' };
       }
-
-      const data = await response.json();
-      setLoading(false);
-      return data;
+      const { ok, data: respData } = await apiFetch(url.replace(/^https?:\/\/[^/]+/, ''), options);
+      if (!ok) throw respData;
+      setData(respData);
+      return respData;
     } catch (err) {
       setError(err);
-      setLoading(false);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { loading, error, post };
+  return { data, loading, error, post };
 }
