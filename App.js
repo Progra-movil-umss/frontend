@@ -44,6 +44,7 @@ function HomeTabs() {
         },
         tabBarActiveTintColor: '#4CAF50',
         tabBarInactiveTintColor: 'gray',
+        headerShown: false, // OCULTAR HEADER EN TODAS LAS TABS PRINCIPALES
       })}
     >
       <Tab.Screen name="Inicio" component={Home} />
@@ -69,22 +70,31 @@ function AppContent() {
   return (
     <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack.Navigator initialRouteName={accessToken ? 'Home' : 'Login'}>
-        {/* Autenticación */}
-        <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-        <Stack.Screen name="Register" component={Register} options={{ title: 'Crear Cuenta' }} />
-        <Stack.Screen name="PasswordRecovery" component={PasswordRecoveryScreen} options={{ title: 'Recuperar Contraseña' }} />
-        {/* Navegación principal */}
-        <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false, gestureEnabled: false }} />
-        {/* Jardines */}
-        <Stack.Screen name="Gardens" component={Gardens} options={{ title: 'Mis Jardines' }} />
-        <Stack.Screen name="CreateGarden" component={CreateGarden} options={{ title: 'Crear Jardín' }} />
-        {/* Recordatorios */}
-        <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
-        <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
-        <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
-        {/* Identificacion de la planta */}
-        <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: colorScheme === 'dark' ? '#111' : '#fff', elevation: 0, shadowOpacity: 0 },
+          headerTitleAlign: 'left',
+          headerTransparent: false,
+          headerSafeAreaInsets: { top: 0, bottom: 0, left: 0, right: 0 },
+        }}
+      >
+        {!accessToken ? (
+          <>
+            <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+            <Stack.Screen name="Register" component={Register} options={{ title: 'Crear Cuenta' }} />
+            <Stack.Screen name="PasswordRecovery" component={PasswordRecoveryScreen} options={{ title: 'Recuperar Contraseña' }} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false, gestureEnabled: false }} />
+            <Stack.Screen name="Gardens" component={Gardens} options={{ title: 'Mis Jardines' }} />
+            <Stack.Screen name="CreateGarden" component={CreateGarden} options={{ title: 'Crear Jardín' }} />
+            <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
+            <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
+            <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
+            <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -94,7 +104,9 @@ export default function App() {
   return (
     <AuthProvider>
       <SafeAreaProvider>
-        <AppContent />
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}> 
+          <AppContent />
+        </SafeAreaView>
       </SafeAreaProvider>
     </AuthProvider>
   );
