@@ -67,7 +67,6 @@ const Login = () => {
           data.refresh_token,
           data.refresh_expires_in || 604800
         );
-        navigation.replace('Home');
       }
     } catch (e) {
       setModalMessage('Error de red, inténtalo más tarde.');
