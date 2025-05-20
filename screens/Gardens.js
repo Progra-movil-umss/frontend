@@ -22,6 +22,8 @@ const Gardens = ({ navigation }) => {
   const [deleting, setDeleting] = useState(false);
   const [reloadToggle, setReloadToggle] = useState(false); // Para forzar recarga manual
 
+   const [confirmEditVisible, setConfirmEditVisible] = useState(false); 
+
   // Cambiar URL para usar reloadToggle y forzar fetch nuevo
   const { data, loading, error } = useFetch(
     `https://florafind-aau6a.ondigitalocean.app/gardens?reload=${reloadToggle}`,
@@ -36,6 +38,13 @@ const Gardens = ({ navigation }) => {
     }
   }, [accessToken]);
 
+  useEffect(() => {
+  const unsubscribe = navigation.addListener('focus', () => {
+    setReloadToggle((prev) => !prev);
+  });
+  return unsubscribe;
+}, [navigation]);
+
   const openOptions = (garden) => {
     setSelectedGarden(garden);
     setModalVisible(true);
@@ -43,6 +52,15 @@ const Gardens = ({ navigation }) => {
 
   const closeOptionsModal = () => {
     setModalVisible(false);
+  };
+
+  const openConfirmEdit = () => {
+    setModalVisible(false);
+  };
+
+  const closeConfirmEdit = () => {
+    setConfirmEditVisible(false);
+    setSelectedGarden(null);
   };
 
   const openConfirmDelete = () => {
@@ -98,10 +116,12 @@ const Gardens = ({ navigation }) => {
   };
 
   const handleEdit = () => {
-    if (!selectedGarden) return;
-    closeOptionsModal();
-    navigation.navigate('CreateGarden', { gardenToEdit: selectedGarden });
-  };
+  if (!selectedGarden) return;
+  setConfirmEditVisible(false); // Cerrar modal de confirmación
+  setModalVisible(false);        // Asegurar cerrar modal de opciones (por si acaso)
+  navigation.navigate('CreateGarden', { gardenToEdit: selectedGarden });
+};
+
 
   const handleGardenPress = (garden) => {
     navigation.navigate('Plants', {
@@ -111,9 +131,13 @@ const Gardens = ({ navigation }) => {
   };
 
   const modalOptions = [
-    { label: 'Editar', onPress: handleEdit },
+    { label: 'Editar', onPress: () => {
+      setModalVisible(false);
+      navigation.navigate('CreateGarden', { gardenToEdit: selectedGarden });
+    }},
     { label: 'Eliminar', onPress: openConfirmDelete, destructive: true },
   ];
+
 
   if (loading) {
     return (
@@ -159,7 +183,36 @@ const Gardens = ({ navigation }) => {
         title={selectedGarden ? selectedGarden.name : 'Opciones'}
         options={modalOptions}
       />
+      {/* Modal para confirmar edición */}
+      <Modal
+        visible={confirmEditVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeConfirmEdit}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Confirmar edición</Text>
+            <Text style={styles.confirmMessage}>¿Estás seguro de editar el jardín?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={closeConfirmEdit}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
 
+              <TouchableOpacity
+                style={[styles.button, styles.editButton]}
+                onPress={handleEdit}
+              >
+                <Text style={styles.editButtonText}>Editar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {/* Modal para confirmar eliminación */}
       <Modal
         visible={confirmDeleteVisible}
         transparent
@@ -219,53 +272,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 24,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
   },
-  confirmTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  confirmMessage: {
-    fontSize: 16,
-    color: '#444',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: 30,
-    borderRadius: 12,
-    minWidth: 120,
-  },
-  cancelButton: {
-    backgroundColor: '#eee',
-  },
-  cancelButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  deleteButton: {
-    backgroundColor: '#ff4d4d',
-  },
-  deleteButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
-  },
+  confirmTitle: { fontSize: 22, fontWeight: 'bold', color: '#4CAF50', marginBottom: 16, textAlign: 'center' },
+  confirmMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginBottom: 24 },
+  confirmButtons: { flexDirection: 'row', justifyContent: 'space-around' },
+  button: { paddingVertical: 14, paddingHorizontal: 30, borderRadius: 12, minWidth: 120 },
+  cancelButton: { backgroundColor: '#eee' },
+  cancelButtonText: { color: '#333', fontWeight: 'bold', textAlign: 'center', fontSize: 16 },
+  editButton: { backgroundColor: '#4CAF50' },
+  editButtonText: { color: '#fff', fontWeight: 'bold', textAlign: 'center', fontSize: 16 },
+  deleteButton: { backgroundColor: '#ff4d4d' },
+  deleteButtonText: { color: '#fff', fontWeight: 'bold', textAlign: 'center', fontSize: 16 },
 });
 
 export default Gardens;

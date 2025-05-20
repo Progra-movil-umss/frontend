@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,34 +13,49 @@ import * as FileSystem from 'expo-file-system';
 import CustomInput from '../components/CustomInput';
 import { useFetchPost } from '../hooks/useFetchPost';
 import { useAuth } from '../AuthContext';
+import { useFetchPut } from '../hooks/useFetchPut';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const CreateGarden = ({ route, navigation }) => {
   const { accessToken } = useAuth();
-  const { loading, error: postError, post } = useFetchPost(accessToken);
+  const { loading: loadingPost, error: postError, post } = useFetchPost(accessToken);
+  const { loading: loadingPut, error: putError, put } = useFetchPut(accessToken);
+
+  const { gardenToEdit } = route.params || {};
 
   const [gardenName, setGardenName] = useState('');
   const [gardenDescription, setGardenDescription] = useState('');
   const [image, setImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [error, setError] = useState(null); // error para validación de imagen
+  const [imageError, setImageError] = useState(null);
+
+  // Nuevo estado para modal confirmación edición
+  const [confirmEditVisible, setConfirmEditVisible] = useState(false);
+
+  useEffect(() => {
+    if (gardenToEdit) {
+      setGardenName(gardenToEdit.name || '');
+      setGardenDescription(gardenToEdit.description || '');
+      setImage(gardenToEdit.image_url || null);
+    }
+  }, [gardenToEdit]);
 
   const validateImageSize = async (uri) => {
     try {
       const fileInfo = await FileSystem.getInfoAsync(uri);
       if (fileInfo.size && fileInfo.size > MAX_IMAGE_SIZE) {
-        setError(
+        setImageError(
           `La imagen es demasiado pesada (${(fileInfo.size / 1024 / 1024).toFixed(
             2
           )} MB). Máximo permitido: 5 MB.`
         );
         return false;
       }
-      setError(null);
+      setImageError(null);
       return true;
     } catch {
-      setError('No se pudo validar el tamaño de la imagen.');
+      setImageError('No se pudo validar el tamaño de la imagen.');
       return false;
     }
   };
@@ -83,14 +98,75 @@ const CreateGarden = ({ route, navigation }) => {
     }
   };
 
+  // Modificación aquí: abrir modal confirmación solo si se edita, o crear directamente si es nuevo
+  const handleSaveGarden = () => {
+    if (!gardenName.trim()) {
+      Alert.alert('Error', 'El nombre del jardín es obligatorio');
+      return;
+    }
+    if (imageError) {
+      Alert.alert('Error', imageError);
+      return;
+    }
+
+    if (gardenToEdit) {
+      setConfirmEditVisible(true);
+    } else {
+      handleCreateGarden();
+    }
+  };
+
+  // Función para confirmar edición y enviar PUT
+  const confirmEdit = async () => {
+  setConfirmEditVisible(false);
+
+  const formData = new FormData();
+  formData.append('name', gardenName);
+  formData.append('description', gardenDescription || '');
+
+  if (image) {
+    const fileType = image.split('.').pop();
+    formData.append('image', {
+      uri: image,
+      name: `garden_image.${fileType}`,
+      type: getMimeType(fileType),
+    });
+  }
+
+  try {
+    const url = `https://florafind-aau6a.ondigitalocean.app/gardens/${gardenToEdit.id}`;
+    const response = await put(url, formData, true);
+
+    if (response.status === 200 || response.status === 204) {
+      Alert.alert('Éxito', 'Jardín actualizado correctamente');
+    } else {
+      Alert.alert(
+        'Atención',
+        'El jardín fue actualizado, pero hubo un problema con la respuesta del servidor.'
+      );
+    }
+
+    navigation.goBack();
+  } catch (err) {
+    // Esto no debería ocurrir porque useFetchPut no lanza error, pero por si acaso
+    Alert.alert(
+      'Atención',
+      'El jardín fue actualizado, pero hubo un problema con la respuesta del servidor.'
+    );
+    navigation.goBack();
+  }
+};
+
+
+  // Crear jardín nuevo (POST)
   const handleCreateGarden = async () => {
     if (!gardenName.trim()) {
       Alert.alert('Error', 'El nombre del jardín es obligatorio');
       return;
     }
 
-    if (error) {
-      Alert.alert('Error', error);
+    if (imageError) {
+      Alert.alert('Error', imageError);
       return;
     }
 
@@ -129,9 +205,12 @@ const CreateGarden = ({ route, navigation }) => {
     navigation.navigate('Gardens');
   };
 
+  const loading = loadingPost || loadingPut;
+  const error = postError || putError;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nuevo Jardín</Text>
+      <Text style={styles.title}>{gardenToEdit ? 'Editar Jardín' : 'Nuevo Jardín'}</Text>
 
       <CustomInput
         label="Nombre del Jardín"
@@ -152,7 +231,7 @@ const CreateGarden = ({ route, navigation }) => {
         <Text style={styles.imagePickerText}>Seleccionar Imagen (opcional)</Text>
       </TouchableOpacity>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {imageError && <Text style={styles.errorText}>{imageError}</Text>}
 
       {image && (
         <Image
@@ -164,17 +243,15 @@ const CreateGarden = ({ route, navigation }) => {
 
       <TouchableOpacity
         style={[styles.button, styles.createButton]}
-        onPress={handleCreateGarden}
+        onPress={handleSaveGarden}
         disabled={loading}
       >
         <Text style={styles.buttonText}>
-          {loading ? 'Creando...' : 'Crear Jardín'}
+          {loading ? 'Guardando...' : (gardenToEdit ? 'Guardar Cambios' : 'Crear Jardín')}
         </Text>
       </TouchableOpacity>
 
-      {postError && (
-        <Text style={styles.errorText}>Error: {JSON.stringify(postError)}</Text>
-      )}
+      {error && <Text style={styles.errorText}>Error: {JSON.stringify(error)}</Text>}
 
       <Modal
         visible={modalVisible}
@@ -191,6 +268,35 @@ const CreateGarden = ({ route, navigation }) => {
             >
               <Text style={styles.modalButtonText}>Aceptar</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal confirmación edición */}
+      <Modal
+        visible={confirmEditVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmEditVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Confirmar edición</Text>
+            <Text style={styles.confirmMessage}>¿Estás seguro de editar el jardín?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setConfirmEditVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.editButton]}
+                onPress={confirmEdit}
+              >
+                <Text style={styles.editButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -223,6 +329,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 8,
+    alignItems: 'center',
   },
   createButton: {
     backgroundColor: '#4CAF50',
@@ -266,6 +373,56 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  confirmModal: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 8,
+    width: '80%',
+    alignItems: 'center',
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 10,
+  },
+  confirmMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+    flex: 1,
+    marginRight: 5,
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  editButton: {
+    backgroundColor: '#4CAF50',
+    flex: 1,
+    marginLeft: 5,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
