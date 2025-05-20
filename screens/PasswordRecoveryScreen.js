@@ -69,7 +69,7 @@ export default function PasswordRecoveryScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
+    <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingHorizontal: 24 }]}>
       <Text style={[styles.title, isDark && { color: '#8bc34a' }]}>Recuperar contraseña</Text>
       <Text style={[styles.subtitle, isDark && { color: '#bbb' }]}>
         Introduce tu correo electrónico para restablecer tu contraseña.
