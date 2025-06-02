@@ -32,13 +32,16 @@ const PlantDetails = ({ route, navigation }) => {
   // }, [navigation]);
 
   const goToEdit = () => {
-    navigation.navigate('EditPlant', {
-      plant,
-      onUpdate: (updatedPlant) => {
-        setPlant(updatedPlant);
-      },
-    });
-  };
+  navigation.navigate('EditPlant', {
+    plant,
+    gardenId: plant.garden_id,          // PASAR gardenId
+    gardenName: plant.garden_name || '', // PASAR nombre jardín si tienes (o string vacío)
+    onUpdate: (updatedPlant) => {
+      setPlant(updatedPlant);
+    },
+  });
+};
+
 
   // Función para eliminar planta
   const handleDelete = () => {

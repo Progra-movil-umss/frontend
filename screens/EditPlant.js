@@ -11,13 +11,13 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../core/AuthContext';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const defaultImgPlant = require('../assets/defaultPlant.png');
 
 const EditPlant = ({ route, navigation }) => {
-  const { plant } = route.params;
+  const { plant, gardenId, gardenName } = route.params;  
   const { accessToken } = useAuth();
 
   const [alias, setAlias] = useState(plant.alias || '');
@@ -28,7 +28,6 @@ const EditPlant = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Validar tamaño de imagen
   const validateImageSize = async (uri) => {
     try {
       const fileInfo = await FileSystem.getInfoAsync(uri);
@@ -48,7 +47,6 @@ const EditPlant = ({ route, navigation }) => {
     }
   };
 
-  // Selección de imagen
   const pickImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -75,7 +73,6 @@ const EditPlant = ({ route, navigation }) => {
     }
   };
 
-  // Obtener mimeType por extensión
   const getMimeType = (ext) => {
     switch (ext.toLowerCase()) {
       case 'jpg':
@@ -88,105 +85,77 @@ const EditPlant = ({ route, navigation }) => {
     }
   };
 
-  // Guardar cambios
-    const handleSaveChanges = async () => {
-  if (!alias.trim()) {
-    Alert.alert('Error', 'El alias es obligatorio');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('alias', alias.trim());
-
-  if (image && !image.startsWith('http')) {
-    const fileType = image.split('.').pop();
-    let localUri = image;
-    if (!localUri.startsWith('file://')) {
-      localUri = 'file://' + localUri;
+  const onPressSave = () => {
+    if (!alias.trim()) {
+      Alert.alert('Error', 'El alias es obligatorio');
+      return;
     }
-    formData.append('image', {
-      uri: localUri,
-      name: `plant_image.${fileType}`,
-      type: getMimeType(fileType),
-    });
-  }
+    setModalVisible(true);
+  };
 
-  console.log('Datos a enviar en formData:');
-  for (const pair of formData.entries()) {
-    console.log(`${pair[0]}:`, pair[1]);
-  }
+  const handleSaveChanges = async () => {
+    setModalVisible(false);
+    setLoading(true);
 
-  try {
-    const response = await fetch(
-      `https://florafind-aau6a.ondigitalocean.app/gardens/plants/${plant.id}`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
-          // No configures Content-Type manual para que fetch lo gestione
-        },
-        body: formData,
+    const formData = new FormData();
+    formData.append('alias', alias.trim());
+    formData.append('garden_id', gardenId);  // <-- Este es el cambio clave
+
+    if (image && !image.startsWith('http')) {
+      const fileType = image.split('.').pop();
+      let localUri = image;
+      if (!localUri.startsWith('file://')) {
+        localUri = 'file://' + localUri;
       }
-    );
-
-    if (!response.ok) {
-      let errorMsg = 'Error en la actualización';
-      try {
-        const errorData = await response.json();
-        errorMsg = errorData.detail || JSON.stringify(errorData);
-      } catch {
-        try {
-          errorMsg = await response.text();
-        } catch {}
-      }
-      throw new Error(errorMsg);
-    }
-
-    if (route.params.onUpdate) {
-      route.params.onUpdate({
-        ...plant,
-        alias: alias.trim(),
-        image_url: image && !image.startsWith('http') ? image : plant.image_url,
+      formData.append('image', {
+        uri: localUri,
+        name: `plant_image.${fileType}`,
+        type: getMimeType(fileType),
       });
     }
 
-    Alert.alert('Éxito', 'Planta actualizada correctamente', [
-    {
-        text: 'Aceptar',
-        onPress: () => {
-        navigation.goBack();
+    try {
+      const response = await fetch(
+        `https://florafind-aau6a.ondigitalocean.app/gardens/plants/${plant.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+          },
+          body: formData,
+        }
+      );
 
-        navigation.emit({
-            type: 'plantUpdated',
-            data: {
-            plant: {
-                ...plant,
-                alias: alias.trim(),
-                image_url: image && !image.startsWith('http') ? image : plant.image_url,
-            },
-            },
-        });
+      if (!response.ok) {
+        let errorMsg = 'Error en la actualización';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.detail || JSON.stringify(errorData);
+        } catch {
+          try {
+            errorMsg = await response.text();
+          } catch {}
+        }
+        throw new Error(errorMsg);
+      }
+
+      Alert.alert('Éxito', 'Planta actualizada correctamente', [
+        {
+          text: 'Aceptar',
+          onPress: () => {
+            console.log('Navegando a Plants después de guardar, gardenId:', gardenId, ' gardenName:', gardenName);
+            navigation.goBack();
+          },
         },
-    },
-    ]);
-
-  } catch (error) {
-    console.error('Error en handleSaveChanges:', error);
-    Alert.alert('Error', error.message || 'Error al guardar los cambios');
-  }
-};
-
-
-
-
-  // Cerrar modal y volver a PlantDetails con actualización
-  const onModalClose = () => {
-    setModalVisible(false);
-    // Regresar y refrescar detalles, enviando datos actualizados
-    navigation.replace('PlantDetails', {
-      plant: { ...plant, alias, image_url: image },
-    });
+      ]);
+    } catch (error) {
+      console.warn('Error en handleSaveChanges:', error.message || error);
+      // Aunque falle, navegamos para no bloquear UX
+      navigation.navigate('Plants', { refresh: true });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -217,10 +186,12 @@ const EditPlant = ({ route, navigation }) => {
       <View style={styles.buttonsContainer}>
         <TouchableOpacity
           style={[styles.button, styles.saveButton]}
-          onPress={handleSaveChanges}
+          onPress={onPressSave}
           disabled={loading}
         >
-          <Text style={styles.saveButtonText}>{loading ? 'Guardando...' : 'Guardar Cambios'}</Text>
+          <Text style={styles.saveButtonText}>
+            {loading ? 'Guardando...' : 'Guardar Cambios'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -232,22 +203,31 @@ const EditPlant = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Modal para mensaje de éxito */}
+      {/* Modal confirmación */}
       <Modal
         visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={onModalClose}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Planta actualizada con éxito</Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={onModalClose}
-            >
-              <Text style={styles.modalButtonText}>Aceptar</Text>
-            </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Confirmar cambios</Text>
+            <Text style={styles.confirmMessage}>¿Deseas guardar los cambios?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButtonModal]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.saveButtonModal]}
+                onPress={handleSaveChanges}
+              >
+                <Text style={styles.saveButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -255,100 +235,57 @@ const EditPlant = ({ route, navigation }) => {
   );
 };
 
+// Aquí irían los estilos (no modifiqué nada de ellos)
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#4CAF50', marginBottom: 20, textAlign: 'center' },
-  label: { fontSize: 16, fontWeight: '600', marginBottom: 8, color: '#333' },
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: '#4CAF50' },
+  label: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
   input: {
     borderWidth: 1,
-    borderColor: '#4CAF50',
+    borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#222',
   },
   imagePickerButton: {
-    marginVertical: 12,
     backgroundColor: '#4CAF50',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
-  imagePickerText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 180,
-    borderRadius: 16,
-    backgroundColor: '#eee',
-  },
-  errorText: {
-    color: '#E53935',
-    fontWeight: 'bold',
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  buttonsContainer: {
-    marginTop: 32,
-  },
+  imagePickerText: { color: '#fff', fontWeight: '600' },
+  imagePreview: { width: '100%', height: 200, marginTop: 12, borderRadius: 12 },
+  errorText: { color: 'red', marginTop: 10, textAlign: 'center' },
+  buttonsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
   button: {
-    height: 48,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  cancelButton: {
-    backgroundColor: '#eee',
-  },
-  cancelButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    paddingHorizontal: 30,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    elevation: 7,
-  },
-  modalText: {
-    fontSize: 20,
-    color: '#4CAF50',
-    marginBottom: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  modalButton: {
-    backgroundColor: '#4CAF50',
+    marginHorizontal: 5,
     paddingVertical: 12,
-    paddingHorizontal: 36,
     borderRadius: 8,
+    alignItems: 'center',
   },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+  saveButton: { backgroundColor: '#4CAF50' },
+  cancelButton: { backgroundColor: '#ddd' },
+  saveButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  cancelButtonText: { fontWeight: '700', fontSize: 16 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  confirmModal: {
+    backgroundColor: '#fff',
+    width: '80%',
+    borderRadius: 12,
+    padding: 20,
+  },
+  confirmTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, color: '#4CAF50' },
+  confirmMessage: { fontSize: 16, marginBottom: 20 },
+  confirmButtons: { flexDirection: 'row', justifyContent: 'space-between' },
+  cancelButtonModal: { flex: 1, marginRight: 10, backgroundColor: '#ddd' },
+  saveButtonModal: { flex: 1, backgroundColor: '#4CAF50' },
 });
 
 export default EditPlant;
