@@ -4,50 +4,50 @@ import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../core/AuthContext';
 import CardPlants from '../components/CardPlants';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Plants = ({ route, navigation }) => {
-  const { gardenId, gardenName, refresh } = route.params || {};
+  const { gardenId: gardenIdParam, gardenName: gardenNameParam, refresh } = route.params || {};
   const { accessToken } = useAuth();
 
+  const [gardenId, setGardenId] = useState(gardenIdParam);
+  const [gardenName, setGardenName] = useState(gardenNameParam);
   const [reloadFlag, setReloadFlag] = useState(false);
 
-  const url = `https://florafind-aau6a.ondigitalocean.app/gardens/${gardenId}/plants?limit=50&skip=0`;
-  const { data, loading, error } = useFetch(url, accessToken);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (refresh) {
+        setReloadFlag(prev => !prev); // fuerza recarga de useFetch
+        navigation.setParams({ ...route.params, refresh: false }); // limpia el flag para no recargar otra vez
+      }
+    }, [refresh])
+  );
 
   useEffect(() => {
-    if (refresh) {
-      setReloadFlag((prev) => !prev); // Cambia estado para forzar recarga
-      navigation.setParams({ refresh: false }); // Quita flag para no refrescar otra vez
-    }
-  }, [refresh]);
+    // Al montar o cambiar params iniciales, guarda gardenId y gardenName en estado local
+    if (gardenIdParam) setGardenId(gardenIdParam);
+    if (gardenNameParam) setGardenName(gardenNameParam);
+  }, [gardenIdParam, gardenNameParam]);
+
+  if (!gardenId) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>No se encontró el ID del jardín.</Text>
+      </View>
+    );
+  }
+
+  const url = `https://florafind-aau6a.ondigitalocean.app/gardens/${gardenId}/plants?limit=50&skip=0`;
+  const { data, loading, error } = useFetch(url, accessToken, reloadFlag);
 
   const plants = data?.items || [];
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>
-          {typeof error === 'string' ? error : JSON.stringify(error)}
-        </Text>
-      </View>
-    );
-  }
-
   const handleIdentifyPress = () => {
     if (!accessToken) {
-      // Si no hay token, muestra alerta y evita navegar
       alert('No autorizado. Por favor, inicia sesión.');
       return;
     }
-    navigation.navigate('Identificar', { accessToken }); // Envía el token si la pantalla lo necesita
+    navigation.navigate('Home', { screen: 'Identificar', params: { accessToken } });
   };
 
   return (
@@ -62,8 +62,8 @@ const Plants = ({ route, navigation }) => {
         ) : (
           plants.map((plant) => {
             const imageUri = plant.image_url && plant.image_url !== "null" ? plant.image_url : null;
-            const plantName = plant.alias || "Sin nombre";  // Asegurarse de que siempre haya un valor
-            const scientificName = plant.scientific_name_without_author || "Nombre científico desconocido"; // Valor predeterminado
+            const plantName = plant.alias || "Sin nombre";
+            const scientificName = plant.scientific_name_without_author || "Nombre científico desconocido";
 
             return (
               <CardPlants
@@ -91,7 +91,7 @@ const Plants = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 8, backgroundColor: '#f9f9f9' },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 20, textAlign: 'center', paddingHorizontal: 8, },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#4CAF50', marginBottom: 20, textAlign: 'center', paddingHorizontal: 8 },
   plantsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -165,6 +165,7 @@ const Gardens = ({ navigation, route }) => {
 
 
   const handleGardenPress = (garden) => {
+    console.log('Navegando a Plants con garden:', garden);
     navigation.navigate('Plants', {
       gardenId: garden.id,
       gardenName: garden.name,
