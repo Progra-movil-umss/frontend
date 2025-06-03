@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// PlantDetails.js (modificado)
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,86 +12,62 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../core/AuthContext';
+import BotanicalGuide from '../components/BotanicalGuide';
 
 const defaultImgPlant = require('../assets/defaultPlant.png');
 
 const PlantDetails = ({ route, navigation }) => {
   const { plant: plantParam } = route.params;
-  const { accessToken } = useAuth(); // Aquí se obtiene el token
+  const { accessToken } = useAuth();
 
-  // Estado local para poder actualizar la planta sin recargar toda la pantalla
   const [plant, setPlant] = useState(plantParam);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('plantUpdated', (e) => {
-  //     const updatedPlant = e.data.plant;
-  //     setPlant(updatedPlant);
-  //   });
+  // Estado para la info de Wikipedia
+  const [wikiData, setWikiData] = useState(null);
+  const [loadingWiki, setLoadingWiki] = useState(true);
+  const [errorWiki, setErrorWiki] = useState(null);
 
-  //   return unsubscribe;
-  // }, [navigation]);
-
-  const goToEdit = () => {
-  navigation.navigate('EditPlant', {
-    plant,
-    gardenId: plant.garden_id,          // PASAR gardenId
-    gardenName: plant.garden_name || '', // PASAR nombre jardín si tienes (o string vacío)
-    onUpdate: (updatedPlant) => {
-      setPlant(updatedPlant);
-    },
-  });
-};
-
-
-  // Función para eliminar planta
-  const handleDelete = () => {
-  Alert.alert(
-    'Confirmar eliminación',
-    `¿Deseas eliminar la planta "${plant.alias || 'sin nombre'}"?`,
-    [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          Alert.alert('Info', 'Eliminando planta...'); // Debug básico
-          try {
-            setLoadingDelete(true);
-            const response = await fetch(
-              `https://florafind-aau6a.ondigitalocean.app/gardens/plants/${plant.id}`,
-              {
-                method: 'DELETE',
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                  Accept: 'application/json',
-                },
-              }
-            );
-            const data = await response.json();
-
-            if (response.ok) {
-              Alert.alert('Éxito', data.message || 'Planta eliminada correctamente', [
-                {
-                  text: 'Aceptar',
-                  onPress: () => {
-                    navigation.navigate('Plants', { refresh: true });
-                  },
-                },
-              ]);
-            } else {
-              throw new Error(data.detail || 'Error eliminando planta');
-            }
-          } catch (error) {
-            Alert.alert('Error', error.message || 'No se pudo eliminar la planta');
-          } finally {
-            setLoadingDelete(false);
+  useEffect(() => {
+    const fetchWikipediaData = async () => {
+      if (!plant.scientific_name_without_author) {
+        setLoadingWiki(false);
+        setWikiData(null);
+        return;
+      }
+      setLoadingWiki(true);
+      setErrorWiki(null);
+      try {
+        const encodedName = encodeURIComponent(plant.scientific_name_without_author);
+        const response = await fetch(
+          `https://florafind-aau6a.ondigitalocean.app/plants/wikipedia/${encodedName}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: 'application/json',
+            },
           }
-        },
-      },
-    ]
-  );
-};
+        );
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(errText || 'Error al obtener información botánica');
+        }
+        const data = await response.json();
+        setWikiData(data);
+      } catch (error) {
+        setErrorWiki(error.message || 'Error al cargar datos botánicos');
+        setWikiData(null);
+      } finally {
+        setLoadingWiki(false);
+      }
+    };
+
+    fetchWikipediaData();
+  }, [plant.scientific_name_without_author, accessToken]);
+
+  // Funciones y UI existentes para eliminar, editar, etc (igual que antes)...
+
+  // ... OMITO para brevedad, usar todo el código original para esas funciones, botones y estilos.
 
   const imageUrl =
     plant.image_url && plant.image_url !== 'null'
@@ -114,6 +91,7 @@ const PlantDetails = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Image source={imageUrl} style={styles.image} resizeMode="cover" />
 
+        {/* Info básica planta (igual que antes) */}
         <View style={styles.card}>
           {/* Nombre */}
           <View style={styles.infoSection}>
@@ -180,12 +158,35 @@ const PlantDetails = ({ route, navigation }) => {
           </View>
         </View>
 
-        {/* Botones al pie */}
+        {/* Sección Wikipedia / BotanicalGuide */}
+        {loadingWiki ? (
+          <View style={{ marginTop: 20, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={{ marginTop: 8, color: '#4CAF50' }}>Cargando información botánica...</Text>
+          </View>
+        ) : errorWiki ? (
+          <View style={{ marginTop: 20, paddingHorizontal: 24 }}>
+            <Text style={{ color: 'red', fontWeight: 'bold', textAlign: 'center' }}>
+              {errorWiki}
+            </Text>
+          </View>
+        ) : (
+          wikiData && <BotanicalGuide guideData={wikiData} />
+        )}
+
+        {/* Botones Editar y Eliminar planta */}
         <View style={styles.buttonsContainer}>
           <TouchableOpacity
             style={[styles.button, styles.editButton]}
             activeOpacity={0.7}
-            onPress={goToEdit}
+            onPress={() =>
+              navigation.navigate('EditPlant', {
+                plant,
+                gardenId: plant.garden_id,
+                gardenName: plant.garden_name || '',
+                onUpdate: (updatedPlant) => setPlant(updatedPlant),
+              })
+            }
           >
             <Text style={styles.editButtonText}>Editar planta</Text>
           </TouchableOpacity>
@@ -193,7 +194,50 @@ const PlantDetails = ({ route, navigation }) => {
           <TouchableOpacity
             style={[styles.button, styles.deleteButton]}
             activeOpacity={0.7}
-            onPress={handleDelete}
+            onPress={() => {
+              Alert.alert(
+                'Confirmar eliminación',
+                `¿Deseas eliminar la planta "${plant.alias || 'sin nombre'}"?`,
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        setLoadingDelete(true);
+                        const response = await fetch(
+                          `https://florafind-aau6a.ondigitalocean.app/gardens/plants/${plant.id}`,
+                          {
+                            method: 'DELETE',
+                            headers: {
+                              Authorization: `Bearer ${accessToken}`,
+                              Accept: 'application/json',
+                            },
+                          }
+                        );
+                        const data = await response.json();
+
+                        if (response.ok) {
+                          Alert.alert('Éxito', data.message || 'Planta eliminada correctamente', [
+                            {
+                              text: 'Aceptar',
+                              onPress: () => navigation.navigate('Plants', { refresh: true }),
+                            },
+                          ]);
+                        } else {
+                          throw new Error(data.detail || 'Error eliminando planta');
+                        }
+                      } catch (error) {
+                        Alert.alert('Error', error.message || 'No se pudo eliminar la planta');
+                      } finally {
+                        setLoadingDelete(false);
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
             disabled={loadingDelete}
           >
             {loadingDelete ? (
@@ -230,8 +274,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 280,
-    // borderBottomLeftRadius: 24,
-    // borderBottomRightRadius: 24,
   },
   card: {
     marginTop: 20,
@@ -240,12 +282,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     backgroundColor: '#fff',
     borderRadius: 12,
-    // Sombra suave para iOS
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    // Elevation para Android
     elevation: 5,
   },
   infoSection: {
