@@ -47,7 +47,7 @@ const Plants = ({ route, navigation }) => {
       alert('No autorizado. Por favor, inicia sesión.');
       return;
     }
-    navigation.navigate('Home', { screen: 'Identificar', params: { accessToken } });
+    navigation.navigate('AddPlant', { gardenId});
   };
 
   return (
