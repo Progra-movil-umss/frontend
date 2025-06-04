@@ -8,14 +8,53 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const screenWidth = Dimensions.get('window').width;
 
-const BotanicalGuide = ({ guideData }) => {
-  if (!guideData) return null;
+const BotanicalGuide = ({ guideData, error }) => {
+  // Si recibimos un error, mostramos pantalla de error amigable
+  if (error) {
+    let message = '';
+    if (typeof error === 'string') {
+      message = error;
+    } else if (error.detail) {
+      try {
+        const detailObj = typeof error.detail === 'string' ? JSON.parse(error.detail) : error.detail;
+        message = detailObj?.message || JSON.stringify(detailObj) || error.detail;
+      } catch {
+        message = error.detail;
+      }
+    } else {
+      message = JSON.stringify(error);
+    }
 
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="warning-outline" size={64} color="#f44336" style={{ marginBottom: 20 }} />
+        <Text style={styles.errorTitle}>Información no disponible</Text>
+        <Text style={styles.errorMessage}>
+          {message.includes('404')
+            ? 'No se encontró información en Wikipedia para esta planta.'
+            : 'Ocurrió un error al obtener la información botánica.'}
+        </Text>
+      </View>
+    );
+  }
+
+  // Si no hay datos, mostramos mensaje neutro
+  if (!guideData) {
+    return (
+      <View style={styles.noDataContainer}>
+        <Ionicons name="leaf-outline" size={64} color="#999" style={{ marginBottom: 20 }} />
+        <Text style={styles.noDataText}>No hay información botánica disponible para esta planta.</Text>
+      </View>
+    );
+  }
+
+  // Render normal con info botánica
   const { title, summary, url, images, sections } = guideData;
 
   return (
@@ -114,12 +153,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     backgroundColor: '#fff',
     borderRadius: 12,
-    // Sombra suave para iOS
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    // Elevation para Android
     elevation: 5,
   },
   infoSection: {
@@ -164,6 +201,44 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     fontSize: 14,
     color: '#444',
+  },
+
+  // Estilos para error estético
+  errorContainer: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    padding: 24,
+    borderRadius: 12,
+    backgroundColor: '#ffe6e6',
+    borderColor: '#f44336',
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f44336',
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#b71c1c',
+    textAlign: 'center',
+  },
+
+  noDataContainer: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    padding: 24,
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#999',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666',
   },
 });
 
