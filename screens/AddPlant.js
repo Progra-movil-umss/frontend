@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, Alert, Image, TouchableOpacity, Acti
 import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import { useAuth } from '../core/AuthContext';
 import { useRoute } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,11 +38,13 @@ const AddPlant = ({ navigation }) => {
   const handleIdentifyPlant = async () => {
     try {
       if (!cameraRef.current) {
-        alert('Cámara no lista.');
+        Toast.show({
+          type: 'error',
+          text1: 'Cámara no lista.',
+          visibilityTime: 4000,  
+        });
         return;
       }
-
-      
       const photo = await cameraRef.current.takePictureAsync({ base64: true });
       setIsLoading(true);
       const formData = new FormData();
@@ -79,7 +82,12 @@ const AddPlant = ({ navigation }) => {
 
         setShowCamera(false);
       } else {
-        alert('Error al identificar la planta.');
+       console.error('Error al identificar la planta:', response.statusText);
+        Toast.show({
+          type: 'error',
+          text1: 'Ocurrió un error al identificar la planta.',
+          visibilityTime: 5000,
+        });
       }
     } catch (error) {
       console.error('Error al identificar la planta:', error);
@@ -94,35 +102,32 @@ const AddPlant = ({ navigation }) => {
     setImageUrl(''); //Eliminar la imagen previa
   };
   const handleSubmit = async () => {
-  console.log("Ejecutando handleSubmit...");
-  
-  // Validar si la planta ya existe en el jardín antes de añadirla
   try {
     const checkResponse = await fetch(`https://florafind-aau6a.ondigitalocean.app/gardens/${gardenId}/plants`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Accept": "application/json",
+        Accept: "application/json",
       },
     });
 
-    if (!checkResponse.ok) {
-      throw new Error("Error al verificar la existencia de la planta");
-    }
+    if (!checkResponse.ok) throw new Error("Error al verificar la existencia de la planta");
 
     const { items } = await checkResponse.json();
-    const existingPlant = items.find((plant) => plant.scientific_name_without_author === scientificNameWithoutAuthor);
-
+    const existingPlant = items.find((plant) => plant.alias === alias);
     if (existingPlant) {
-      Alert.alert("Error", `La planta "${scientificNameWithoutAuthor}" ya está registrada en este jardín. Por favor Ingrese otro Alias `);
-      return; // Detiene la ejecución para evitar añadir duplicados
+      Toast.show({
+        type: 'error',
+        text1: `La planta "${alias}" ya está registrada.`,
+        visibilityTime: 6000,
+      });
+      return;
     }
   } catch (error) {
     Alert.alert("Error", "No se pudo verificar si la planta ya existe.");
     return;
   }
 
-  // Si la planta no existe, proceder a añadirla
   const newPlant = {
     alias,
     image_url: imageUrl,
@@ -145,12 +150,48 @@ const AddPlant = ({ navigation }) => {
 
     if (!response.ok) throw new Error("Error al añadir la planta");
 
-    Alert.alert("Éxito", "Planta añadida correctamente.");
-    navigation.goBack();
+    Toast.show({
+      type: 'success',
+      text1: 'Planta agregada correctamente.',
+      visibilityTime: 5000,
+    });
+
+    navigation.replace('Plants', { gardenId, refresh: true });
   } catch (error) {
-    Alert.alert("Error", error.message);
+    console.error(error);
+    Toast.show({
+      type: 'error',
+      text1: error.message || 'Error al añadir la planta.',
+      visibilityTime: 5000,
+    });
   }
 };
+  
+const toastConfig = {
+    error: ({ text1, props, ...rest }) => (
+      <View style={{
+        height: 60,
+        backgroundColor: '#81C784',  // rojo oscuro
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        justifyContent: 'center',
+      }}>
+        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{text1}</Text>
+      </View>
+    ),
+    success: ({ text1, props, ...rest }) => (
+      <View style={{
+        height: 60,
+        backgroundColor: '#388E3C',  // verde oscuro
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        justifyContent: 'center',
+      }}>
+        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{text1}</Text>
+      </View>
+    ),
+    // puedes agregar otros tipos: info, custom, etc.
+  };
   return (
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
@@ -214,6 +255,7 @@ const AddPlant = ({ navigation }) => {
             <Text style={styles.loadingText}>Identificando planta...</Text>
           </View>
         )}
+        <Toast config={toastConfig} />
       </View>
     </SafeAreaView>
   );
@@ -296,18 +338,18 @@ saveButtonText: {
   textAlign: 'center',
 },
 inputRow: {
-  flexDirection: 'row', // 🔹 Alinea los elementos horizontalmente
-  alignItems: 'center', // 🔹 Asegura que estén alineados correctamente
+  flexDirection: 'row', 
+  alignItems: 'center', 
   marginBottom: height * 0.01,
 },
 inputLabel: {
-  width: width * 0.3, // 🔹 Ajusta el ancho del título
+  width: width * 0.3, 
   fontWeight: 'bold',
   fontSize: width * 0.04,
   color: '#81C784',
 },
 input: {
-  flex: 1, // 🔹 Permite que el campo de entrada ocupe el espacio restante
+  flex: 1, 
   borderWidth: 1,
   borderColor: '#ccc',
   padding: height * 0.015,
@@ -320,7 +362,7 @@ loadingOverlay: {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.6)', // 🔹 Oscurece la pantalla
+  backgroundColor: 'rgba(0, 0, 0, 0.6)', 
   justifyContent: 'center',
   alignItems: 'center',
 },

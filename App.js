@@ -7,6 +7,7 @@ import { Image, View, useColorScheme, Text, Platform } from 'react-native';
 import { AuthProvider, AuthContext } from './core/AuthContext';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -116,6 +117,7 @@ function AppContent() {
           </>
         )}
       </Stack.Navigator>
+      <Toast />
     </NavigationContainer>
   );
 }

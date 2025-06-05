@@ -15,13 +15,13 @@ const Plants = ({ route, navigation }) => {
   const [reloadFlag, setReloadFlag] = useState(false);
 
   useFocusEffect(
-    React.useCallback(() => {
-      if (refresh) {
-        setReloadFlag(prev => !prev); // fuerza recarga de useFetch
-        navigation.setParams({ ...route.params, refresh: false }); // limpia el flag para no recargar otra vez
-      }
-    }, [refresh])
-  );
+  React.useCallback(() => {
+    if (route.params?.refresh) {
+      setReloadFlag(prev => !prev); // Fuerza la recarga de datos
+      navigation.setParams({ refresh: false }); // Limpia el flag para evitar recargas innecesarias
+    }
+  }, [route.params?.refresh])
+);
 
   useEffect(() => {
     // Al montar o cambiar params iniciales, guarda gardenId y gardenName en estado local
@@ -47,7 +47,7 @@ const Plants = ({ route, navigation }) => {
       alert('No autorizado. Por favor, inicia sesión.');
       return;
     }
-    navigation.navigate('AddPlant', { gardenId});
+    navigation.replace('AddPlant', { gardenId});
   };
 
   return (
