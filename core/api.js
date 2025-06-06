@@ -64,10 +64,13 @@ export const apiFetch = async (endpoint, options = {}) => {
   let url = endpoint.startsWith('http') ? endpoint : API_BASE_URL + endpoint;
   let resp = await fetch(url, fetchOptions);
   
-  // Si es una petición de login, no intentar refresh
-  if (endpoint.includes('/auth/login')) {
+  if (endpoint.includes('/auth/token')) {
     let data;
-    try { data = await resp.json(); } catch { data = null; }
+    try { 
+      data = await resp.json();
+    } catch { 
+      data = null; 
+    }
     return { ok: resp.ok, status: resp.status, data };
   }
 

@@ -52,12 +52,10 @@ const Login = () => {
           password,
         }),
       });
-      const text = JSON.stringify(data);
+      
       if (!ok) {
-        const detail = Array.isArray(data?.detail)
-          ? data.detail.map(d => d.msg || JSON.stringify(d)).join('\n')
-          : text || 'Error desconocido';
-        setModalMessage(detail);
+        const errorMessage = data?.detail || 'Error al iniciar sesión';
+        setModalMessage(errorMessage);
         setModalVisible(true);
       } else {
         // Guardar ambos tokens y expiraciones
@@ -101,11 +99,6 @@ const Login = () => {
         secureText
         error={touched.password ? errors.password : ''}
       />
-
-      <View style={styles.row}>
-        <Checkbox checked={remember} onToggle={() => setRemember(r => !r)} />
-        <Text style={[styles.rememberText, isDark && styles.darkRememberText]}>Recordar contraseña</Text>
-      </View>
 
       <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')} style={{ alignSelf: 'flex-start' }}>
         <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
