@@ -8,6 +8,7 @@ import { AuthProvider, AuthContext } from './core/AuthContext';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
+import NetworkCheck from './components/NetworkCheck';
 
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -77,48 +78,44 @@ function AppContent() {
     );
   }
   return (
-    <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: { backgroundColor: colorScheme === 'dark' ? '#111' : '#fff', elevation: 0, shadowOpacity: 0 },
-          headerTitleAlign: 'left',
-          headerTransparent: false,
-          headerSafeAreaInsets: { top: 0, bottom: 0, left: 0, right: 0 },
-        }}
-      >
-        {!accessToken ? (
-          <>
-            <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-            <Stack.Screen name="Register" component={Register} options={{ title: 'Crear Cuenta' }} />
-            <Stack.Screen name="PasswordRecovery" component={PasswordRecoveryScreen} options={{ title: 'Recuperar Contraseña' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false, gestureEnabled: false }} />
-            <Stack.Screen name="Gardens" component={Gardens} options={{ title: 'Mis Jardines' }} />
-            <Stack.Screen name="CreateGarden" component={CreateGarden} options={{ title: 'Crear Jardín' }} />
-            <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
-            <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
-            <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
-            <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
-            <Stack.Screen name="Plants" component={Plants} options={{ title: 'Plantas del Jardín' }} />
-            <Stack.Screen name="PlantDetails" component={PlantDetails} options={{ title: 'Detalle de Planta' }} />
+    <NetworkCheck>
+      <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: { backgroundColor: colorScheme === 'dark' ? '#111' : '#fff', elevation: 0, shadowOpacity: 0 },
+            headerTitleAlign: 'left',
+            headerTransparent: false,
+            headerSafeAreaInsets: { top: 0, bottom: 0, left: 0, right: 0 },
+          }}
+        >
+          {!accessToken ? (
+            <>
+              <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+              <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
+              <Stack.Screen name="PasswordRecovery" component={PasswordRecoveryScreen} options={{ headerShown: false }} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false, gestureEnabled: false }} />
+              <Stack.Screen name="Gardens" component={Gardens} options={{ title: 'Mis Jardines' }} />
+              <Stack.Screen name="CreateGarden" component={CreateGarden} options={{ title: 'Crear Jardín' }} />
+              <Stack.Screen name="Alarms" component={Alarms} options={{ title: 'Alarmas' }} />
+              <Stack.Screen name="PlantasDelJardin" component={PlantasDelJardin} options={{ title: 'Plantas del Jardín' }} />
+              <Stack.Screen name="ConfigurarAlarma" component={ConfigurarAlarma} options={{ title: 'Configurar Alarma' }} />
+              <Stack.Screen name="PlantResult" component={ResultPlantIdentify} options={{ title: '' }} />
+              <Stack.Screen name="Plants" component={Plants} options={{ title: 'Plantas del Jardín' }} />
+              <Stack.Screen name="PlantDetails" component={PlantDetails} options={{ title: 'Detalle de Planta' }} />
 
-            <Stack.Screen name="AddPlant" component={AddPlant} options={{ title: '' }} />
+              <Stack.Screen name="AddPlant" component={AddPlant} options={{ title: '' }} />
 
-            <Stack.Screen name="EditPlant" component={EditPlant} />
-            <Stack.Screen name="EditProfile" component={EditProfile} options={{ title: 'Editar Perfil' }} />
-
-            
-
-
-
-          </>
-        )}
-      </Stack.Navigator>
-      <Toast />
-    </NavigationContainer>
+              <Stack.Screen name="EditPlant" component={EditPlant} />
+              <Stack.Screen name="EditProfile" component={EditProfile} options={{ title: 'Editar Perfil' }} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </NetworkCheck>
   );
 }
 
