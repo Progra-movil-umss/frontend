@@ -118,19 +118,19 @@ export const AuthProvider = ({ children }) => {
       });
       if (!resp.ok) throw new Error('Refresh token inválido');
       const data = await resp.json();
-      const expiresIn = data.expires_in || 1800;
-      const refreshExpiresIn = data.refresh_expires_in || 604800;
+      const expiresIn = data.data.expires_in || 1800;
+      const refreshExpiresIn = data.data.refresh_expires_in || 604800;
       const expiryTime = Date.now() + expiresIn * 1000;
       const refreshExpTime = Date.now() + refreshExpiresIn * 1000;
       await storage.multiSet([
-        [TOKEN_KEY, data.access_token],
+        [TOKEN_KEY, data.data.access_token],
         [EXPIRY_KEY, expiryTime.toString()],
-        [REFRESH_KEY, data.refresh_token || refresh],
+        [REFRESH_KEY, data.data.refresh_token || refresh],
         [REFRESH_EXPIRY_KEY, refreshExpTime.toString()],
       ]);
-      setAccessToken(data.access_token);
+      setAccessToken(data.data.access_token);
       setTokenExpiry(expiryTime);
-      setRefreshToken(data.refresh_token || refresh);
+      setRefreshToken(data.data.refresh_token || refresh);
       setRefreshExpiry(refreshExpTime);
       tokenEvents.emit('tokenRefreshed');
       scheduleProactiveRefresh(expiryTime);

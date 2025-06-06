@@ -4,7 +4,7 @@ import CustomInput from '../components/CustomInput';
 import Checkbox from '../components/Checkbox';
 import { useNavigation } from '@react-navigation/native';
 import { useContext } from 'react';
-import { AuthContext } from '../core/AuthContext'; 
+import { AuthContext } from '../core/AuthContext';
 import { apiFetch } from '../core/api';
 
 
@@ -62,10 +62,10 @@ const Login = () => {
       } else {
         // Guardar ambos tokens y expiraciones
         await login(
-          data.access_token,
-          data.expires_in || 1800,
-          data.refresh_token,
-          data.refresh_expires_in || 604800
+          data.data.access_token,
+          data.data.expires_in || 1800,
+          data.data.refresh_token,
+          data.data.refresh_expires_in || 604800
         );
       }
     } catch (e) {
@@ -77,7 +77,7 @@ const Login = () => {
   };
 
   return (
-    <View style={[styles.container, isDark && styles.dark]}> 
+    <View style={[styles.container, isDark && styles.dark]}>
       <Text style={[styles.welcome, isDark && styles.darkWelcome]}>Bienvenido a</Text>
       <Text style={[styles.floraFind, isDark && styles.darkFloraFind]}>FloraFind</Text>
       <CustomInput
