@@ -23,25 +23,33 @@ const REFRESH_EXPIRY_KEY = 'flora_refresh_token_expiry';
 async function refreshTokenRequest() {
   const refreshToken = await storage.getItem(REFRESH_KEY);
   if (!refreshToken) throw new Error('No refresh token');
-  // El backend espera el refresh_token como parámetro de query
-  const resp = await fetch(`${API_BASE_URL}/auth/refresh?refresh_token=${encodeURIComponent(refreshToken)}`, {
+  
+  // Crear el body como form-urlencoded
+  const formData = new URLSearchParams();
+  formData.append('refresh_token', refreshToken);
+  
+  const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formData.toString()
   });
+  
   if (!resp.ok) throw new Error('Refresh token inválido');
   const data = await resp.json();
-  const expiresIn = data.expires_in || 1800;
-  const refreshExpiresIn = data.refresh_expires_in || 604800;
+  const expiresIn = data.data.expires_in || 1800;
+  const refreshExpiresIn = data.data.refresh_expires_in || 604800;
   const expiryTime = Date.now() + expiresIn * 1000;
   const refreshExpTime = Date.now() + refreshExpiresIn * 1000;
   await storage.multiSet([
-    [TOKEN_KEY, data.access_token],
+    [TOKEN_KEY, data.data.access_token],
     [EXPIRY_KEY, expiryTime.toString()],
-    [REFRESH_KEY, data.refresh_token || refreshToken],
+    [REFRESH_KEY, data.data.refresh_token || refreshToken],
     [REFRESH_EXPIRY_KEY, refreshExpTime.toString()],
   ]);
   tokenEvents.emit('tokenRefreshed'); // Notificar al contexto
-  return data.access_token;
+  return data.data.access_token;
 }
 
 // apiFetch con fetch puro y refresh automático
@@ -55,6 +63,14 @@ export const apiFetch = async (endpoint, options = {}) => {
   };
   let url = endpoint.startsWith('http') ? endpoint : API_BASE_URL + endpoint;
   let resp = await fetch(url, fetchOptions);
+  
+  // Si es una petición de login, no intentar refresh
+  if (endpoint.includes('/auth/login')) {
+    let data;
+    try { data = await resp.json(); } catch { data = null; }
+    return { ok: resp.ok, status: resp.status, data };
+  }
+
   if (resp.status !== 401) {
     let data;
     try { data = await resp.json(); } catch { data = null; }
