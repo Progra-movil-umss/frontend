@@ -15,75 +15,79 @@ import { useNavigation } from '@react-navigation/native';
 const TITLE_COLOR = '#4CAF50';
 const DISABLED_COLOR = '#81C784';
 
-const EditProfile = () => {
+const ChangePassW = () => {
   const { accessToken } = useAuth();
   const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  // Estados para los campos email y username
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
+  // Estados para contraseña
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   // Validaciones y touched
   const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({ email: false, username: false });
+  const [touched, setTouched] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmNewPassword: false,
+  });
   const [valid, setValid] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Modales
   const [modalConfirmVisible, setModalConfirmVisible] = useState(false);
   const [modalSuccessVisible, setModalSuccessVisible] = useState(false);
+  const [modalWrongPasswordVisible, setModalWrongPasswordVisible] = useState(false);
   const [modalErrorVisible, setModalErrorVisible] = useState(false);
   const [modalErrorMessage, setModalErrorMessage] = useState('');
 
-  // VALIDACIONES: al menos un campo debe estar lleno y sin errores individuales
+  // VALIDACIONES
   useEffect(() => {
     const errs = {};
-    // validar email solo si el usuario escribió algo
-    if (email.trim()) {
-      if (!email.includes('@')) {
-        errs.email = 'Ingrese un correo electrónico válido';
-      }
+    if (!currentPassword) {
+      errs.currentPassword = 'La contraseña actual es obligatoria';
     }
-    // validar username solo si el usuario escribió algo
-    if (username.trim()) {
-      // aquí podrías añadir más reglas si lo deseas
-      if (username.trim().length === 0) {
-        errs.username = 'El nombre de usuario es obligatorio';
-      }
+    if (!newPassword) {
+      errs.newPassword = 'La nueva contraseña es obligatoria';
+    } else if (newPassword.length < 6) {
+      errs.newPassword = 'La nueva contraseña debe tener al menos 6 caracteres';
+    }
+    if (!confirmNewPassword) {
+      errs.confirmNewPassword = 'Debe confirmar la nueva contraseña';
+    } else if (confirmNewPassword !== newPassword) {
+      errs.confirmNewPassword = 'Las contraseñas no coinciden';
     }
     setErrors(errs);
+    setValid(Object.keys(errs).length === 0);
+  }, [currentPassword, newPassword, confirmNewPassword]);
 
-    // determinar validez: al menos un campo no vacío y sin error correspondiente
-    const emailOk = email.trim() && !errs.email;
-    const usernameOk = username.trim() && !errs.username;
-    setValid(Boolean(emailOk || usernameOk));
-  }, [email, username]);
-
-  // Al presionar "Guardar cambios"
-  const onPressGuardarCambios = () => {
-    console.log('[EditProfile] Botón Guardar Cambios presionado');
-    setTouched({ email: true, username: true });
+  // Al presionar "Guardar contraseña"
+  const onPressGuardarContraseña = () => {
+    console.log('[ChangePassW] Botón Guardar Contraseña presionado');
+    setTouched({
+      currentPassword: true,
+      newPassword: true,
+      confirmNewPassword: true,
+    });
     if (!valid) {
-      console.log('[EditProfile] Validación fallida, errores:', errors);
-      Alert.alert('Error', 'Por favor completa al menos un campo correctamente.');
+      console.log('[ChangePassW] Validación fallida, errores:', errors);
+      Alert.alert('Error', 'Por favor corrige los errores en el formulario.');
       return;
     }
     setModalConfirmVisible(true);
   };
 
   // Enviar PUT /auth/me
-  const handleGuardarConfirmado = async () => {
+  const handleSavePassword = async () => {
     setModalConfirmVisible(false);
     setLoading(true);
-
-    // construir body con solo los campos que el usuario llenó
-    const body = {};
-    if (email.trim()) body.email = email.trim();
-    if (username.trim()) body.username = username.trim();
-
-    console.log('[EditProfile] Enviando PUT /auth/me con body:', body);
+    const body = {
+      current_password: currentPassword,
+      new_password: newPassword,
+    };
+    console.log('[ChangePassW] Enviando PUT /auth/me con body:', body);
 
     try {
       const response = await fetch('https://florafind-aau6a.ondigitalocean.app/auth/me', {
@@ -98,17 +102,20 @@ const EditProfile = () => {
       const respText = await response.text();
       let respJson = null;
       try { respJson = JSON.parse(respText); } catch {}
-      console.log('[EditProfile] Respuesta backend:', response.status, respJson || respText);
+      console.log('[ChangePassW] Respuesta backend:', response.status, respJson || respText);
 
       if (response.ok) {
         setModalSuccessVisible(true);
+      } else if (response.status === 400 && respJson?.detail?.includes('401')) {
+        console.warn('[ChangePassW] Contraseña actual incorrecta');
+        setModalWrongPasswordVisible(true);
       } else {
-        const errorMsg = respJson?.detail || 'Error al actualizar perfil';
+        const errorMsg = respJson?.detail || 'Error al cambiar la contraseña';
         setModalErrorMessage(errorMsg);
         setModalErrorVisible(true);
       }
     } catch (err) {
-      console.error('[EditProfile] Error de red:', err);
+      console.error('[ChangePassW] Error de red:', err);
       setModalErrorMessage('No se pudo conectar al servidor');
       setModalErrorVisible(true);
     } finally {
@@ -119,6 +126,11 @@ const EditProfile = () => {
   const closeSuccessModal = () => {
     setModalSuccessVisible(false);
     navigation.navigate('Home', { screen: 'Perfil' });
+  }; 
+  const closeWrongPasswordModal = () => {
+    setModalWrongPasswordVisible(false);
+    setCurrentPassword('');
+    setTouched(prev => ({ ...prev, currentPassword: false }));
   };
   const closeErrorModal = () => {
     setModalErrorVisible(false);
@@ -126,29 +138,42 @@ const EditProfile = () => {
 
   return (
     <View style={[styles.container, isDark && { backgroundColor: '#111' }, { paddingHorizontal: 24 }]}>
-      <Text style={[styles.title, isDark && { color: TITLE_COLOR }]}>Editar perfil</Text>
+      <Text style={[styles.title, isDark && { color: TITLE_COLOR }]}>Cambiar contraseña</Text>
 
       <CustomInput
-        label="Correo electrónico"
-        placeholder="Ingrese su correo electrónico"
-        value={email}
+        label="Contraseña actual"
+        placeholder="Ingrese su contraseña actual"
+        value={currentPassword}
         onChangeText={text => {
-          setEmail(text);
-          if (!touched.email) setTouched(prev => ({ ...prev, email: true }));
+          setCurrentPassword(text);
+          if (!touched.currentPassword) setTouched(prev => ({ ...prev, currentPassword: true }));
         }}
-        keyboardType="email-address"
-        error={touched.email ? errors.email : ''}
+        secureText
+        error={touched.currentPassword ? errors.currentPassword : ''}
       />
 
       <CustomInput
-        label="Nombre de usuario"
-        placeholder="Ingrese su nombre de usuario"
-        value={username}
+        label="Nueva contraseña"
+        placeholder="Ingrese su nueva contraseña"
+        value={newPassword}
         onChangeText={text => {
-          setUsername(text);
-          if (!touched.username) setTouched(prev => ({ ...prev, username: true }));
+          setNewPassword(text);
+          if (!touched.newPassword) setTouched(prev => ({ ...prev, newPassword: true }));
         }}
-        error={touched.username ? errors.username : ''}
+        secureText
+        error={touched.newPassword ? errors.newPassword : ''}
+      />
+
+      <CustomInput
+        label="Repita nueva contraseña"
+        placeholder="Repita su nueva contraseña"
+        value={confirmNewPassword}
+        onChangeText={text => {
+          setConfirmNewPassword(text);
+          if (!touched.confirmNewPassword) setTouched(prev => ({ ...prev, confirmNewPassword: true }));
+        }}
+        secureText
+        error={touched.confirmNewPassword ? errors.confirmNewPassword : ''}
       />
 
       <View style={styles.buttonContainer}>
@@ -158,33 +183,32 @@ const EditProfile = () => {
             { backgroundColor: valid ? TITLE_COLOR : DISABLED_COLOR, opacity: loading ? 0.7 : 1 },
             isDark && { backgroundColor: valid ? '#33691e' : '#607d8b' },
           ]}
-          onPress={onPressGuardarCambios}
+          onPress={onPressGuardarContraseña}
           disabled={!valid || loading}
         >
-          <Text style={styles.buttonText}>{loading ? 'Guardando...' : 'Guardar cambios'}</Text>
+          <Text style={styles.buttonText}>{loading ? 'Guardando...' : 'Guardar contraseña'}</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={() => navigation.navigate('Home', { screen: 'Perfil' })}
-          disabled={loading}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
+                  style={[styles.button, styles.cancelButton, { marginTop: 12 }]}
+                  onPress={() => navigation.navigate('Home', { screen: 'Perfil' })}
+                  disabled={loading}
+                >
+                  <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancelar</Text>
+                </TouchableOpacity>
       </View>
 
       {/* Modal Confirmación */}
       <Modal visible={modalConfirmVisible} transparent animationType="fade" onRequestClose={() => setModalConfirmVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.confirmModal}>
-            <Text style={styles.confirmTitle}>Confirmar cambios</Text>
-            <Text style={styles.confirmMessage}>¿Está seguro de editar la información del perfil?</Text>
+            <Text style={styles.confirmTitle}>Confirmar acción</Text>
+            <Text style={styles.confirmMessage}>¿Desea cambiar su contraseña?</Text>
             <View style={styles.confirmButtons}>
               <TouchableOpacity style={[styles.button, styles.cancelButtonModal]} onPress={() => setModalConfirmVisible(false)}>
                 <Text style={styles.cancelButtonTextModal}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.saveButtonModal]} onPress={handleGuardarConfirmado}>
-                <Text style={styles.saveButtonTextModal}>Guardar</Text>
+              <TouchableOpacity style={[styles.button, styles.saveButtonModal]} onPress={handleSavePassword}>
+                <Text style={styles.saveButtonTextModal}>Confirmar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -196,7 +220,7 @@ const EditProfile = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.confirmModal}>
             <Text style={styles.confirmTitle}>Éxito</Text>
-            <Text style={styles.confirmMessage}>Cambios guardados con éxito</Text>
+            <Text style={styles.confirmMessage}>Contraseña cambiada con éxito</Text>
             <TouchableOpacity style={[styles.button, styles.saveButtonModal, { marginTop: 10, width: '60%' }]} onPress={closeSuccessModal}>
               <Text style={styles.saveButtonTextModal}>Aceptar</Text>
             </TouchableOpacity>
@@ -204,7 +228,20 @@ const EditProfile = () => {
         </View>
       </Modal>
 
-      {/* Modal Error */}
+      {/* Modal Contraseña Incorrecta */}
+      <Modal visible={modalWrongPasswordVisible} transparent animationType="fade" onRequestClose={closeWrongPasswordModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Error</Text>
+            <Text style={styles.confirmMessage}>Contraseña actual incorrecta</Text>
+            <TouchableOpacity style={[styles.button, styles.saveButtonModal, { marginTop: 10, width: '60%' }]} onPress={closeWrongPasswordModal}>
+              <Text style={styles.saveButtonTextModal}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Error Genérico */}
       <Modal visible={modalErrorVisible} transparent animationType="fade" onRequestClose={closeErrorModal}>
         <View style={styles.modalOverlay}>
           <View style={styles.confirmModal}>
@@ -226,20 +263,8 @@ const styles = StyleSheet.create({
   buttonContainer: { marginTop: 16, paddingHorizontal: 24 },
   button: { paddingVertical: 14, borderRadius: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
-
-  cancelButton: {
-    backgroundColor: '#ccc',
-    paddingVertical: 14,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  cancelButtonText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
+  cancelButton: {backgroundColor: '#ccc',paddingVertical: 14,borderRadius: 8,marginTop: 12 },
+  cancelButtonText: { color: '#333', fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
   confirmModal: { backgroundColor: '#fff', padding: 24, borderRadius: 16, width: '80%', alignItems: 'center' },
   confirmTitle: { fontSize: 20, fontWeight: 'bold', color: '#4CAF50', marginBottom: 12 },
@@ -251,4 +276,4 @@ const styles = StyleSheet.create({
   saveButtonTextModal: { color: '#fff', fontWeight: 'bold', fontSize: 16, textAlign: 'center' },
 });
 
-export default EditProfile;
+export default ChangePassW;

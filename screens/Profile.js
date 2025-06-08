@@ -18,10 +18,13 @@ const Profile = () => {
     navigation.navigate('EditProfile');
   };
 
+  const handleChangePassword = () => {
+    navigation.navigate('ChangePassW');
+  };
+
   return (
     <View style={[styles.container, isDark && { backgroundColor: '#111' }]}>
       <Text style={[styles.title, isDark && { color: '#aed581' }]}>Perfil</Text>
-      {/* ...otros datos de perfil si los hay... */}
       
       {/* Botón Editar perfil */}
       <TouchableOpacity
@@ -29,6 +32,13 @@ const Profile = () => {
         onPress={handleEditProfile}
       >
         <Text style={styles.editProfileButtonText}>Editar perfil</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.editProfileButton}
+        onPress={handleChangePassword}
+      >
+        <Text style={styles.editProfileButtonText}>Cambiar contraseña</Text>
       </TouchableOpacity>
 
 
