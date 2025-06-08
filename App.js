@@ -39,6 +39,10 @@ import AddPlant from './screens/AddPlant';
 import EditProfile from './screens/EditProfile';
 import WeatherDetails from './components/WeatherDetails';
 import ChangePassW from './screens/ChangePassW';
+import PlantNotes from './screens/PlantNotes';
+import CreateNotes from './screens/CreateNotes';
+
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -113,7 +117,9 @@ function AppContent() {
 
               <Stack.Screen name="EditPlant" component={EditPlant} />
               <Stack.Screen name="EditProfile" component={EditProfile} options={{ title: 'Editar Perfil' }} />
-              <Stack.Screen name="ChangePassW" component={ChangePassW} options={{ title: 'Cmabiar contraseña' }} />
+              <Stack.Screen name="ChangePassW" component={ChangePassW} options={{ title: 'Cambiar contraseña' }} />
+              <Stack.Screen name="PlantNotes" component={PlantNotes} options={{title: ' '}} />
+              <Stack.Screen name="CreateNotes" component={CreateNotes} options={{title: ' '}} />
               <Stack.Screen name="WeatherDetails" component={WeatherDetails} options={{ title: 'Detalles del Clima' }} />
             </>
           )}
