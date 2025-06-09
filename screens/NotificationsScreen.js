@@ -1,4 +1,3 @@
-// screens/NotificationsScreen.js
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import NotificationCard from '../components/NotificationCard';
@@ -126,7 +125,7 @@ export default function NotificationsScreen() {
             <NotificationCard
               key={alarm.id}
               alarm={alarm}
-              plantAlias={alarm.plantAlias}  // Aquí pasa el alias
+              plantAlias={alarm.plantAlias}
               reviewed={alarm.reviewed}
               onPress={() => markAsReviewed(alarm.id)}
             />
@@ -141,4 +140,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 16, paddingBottom: 100 },
   title: { fontSize: 24, fontWeight: 'bold', color: 'green', marginBottom: 20, textAlign: 'center',color: '#4CAF50' },
+
+
 });

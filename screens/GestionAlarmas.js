@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import AlarmCard from '../components/AlarmCard'; // Asegúrate que la ruta sea correcta
+import AlarmCard from '../components/AlarmCard'; 
 
 const STORAGE_KEY = 'alarms';
 
