@@ -42,7 +42,7 @@ import AddPlant from './screens/AddPlant';
 import EditProfile from './screens/EditProfile';
 
 import GestionarAlarmas from './screens/GestionAlarmas';
-import AgregarAlarmaManual from './screens/AgregarAlarmaManual';
+
 
 import WeatherDetails from './components/WeatherDetails';
 import ChangePassW from './screens/ChangePassW';
@@ -136,7 +136,7 @@ function AppContent() {
               <Stack.Screen name="WeatherDetails" component={WeatherDetails} options={{ title: 'Detalles del Clima' }} />
 
               <Stack.Screen name="GestionAlarmas" component={GestionarAlarmas} />
-              <Stack.Screen name="AgregarAlarmaManual" component={AgregarAlarmaManual} />
+              
               <Stack.Screen name="DetalleAlarma" component={DetalleAlarmaScreen} options={{ title: '' }} />
             </>
           )}
