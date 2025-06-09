@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
 import { useAuth } from '../core/AuthContext';
 import { useFetch } from '../hooks/useFetch';
 import { useNavigation } from '@react-navigation/native';
@@ -27,6 +28,7 @@ const Home = () => {
   );
 
   return (
+
     <ScrollView style={[styles.container, isDark && { backgroundColor: '#111' }]}>
       <View style={[styles.content, { paddingHorizontal: 24 }, { paddingTop: 50 }]}>
         <Text style={[styles.titleBlack, isDark && { color: '#fff' }]}>Bienvenido a </Text>
@@ -45,6 +47,7 @@ const Home = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
   );
 };
 
@@ -89,6 +92,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
   },
+
 });
 
 export default Home;

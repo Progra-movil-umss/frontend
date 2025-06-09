@@ -72,6 +72,7 @@ const Plants = ({ route, navigation }) => {
                 name={plantName}
                 scientificName={scientificName}
                 plantProps={plant}
+                gardenName={gardenName}
               />
             );
           })
