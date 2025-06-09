@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,19 @@ import { Ionicons } from '@expo/vector-icons';
 const COLORS = ['#F2F5A9', '#42BDFF', '#A6DEB7', '#DEBF8E', '#FFADA6'];
 
 const CreateNotes = ({ route, navigation }) => {
-  const { plantId, plantName } = route.params;
+  const { plantId, plantName, note } = route.params;
   const { accessToken } = useAuth();
 
-  const [text, setText] = useState('');
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [text, setText] = useState(note?.text || '');
+  const [selectedColor, setSelectedColor] = useState(note?.color || COLORS[0]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+
+  useEffect(() => {
+    console.log('[CreateNotes] Modo:', note ? 'Editar nota existente' : 'Crear nueva nota');
+    if (note) console.log('[CreateNotes] Nota recibida para edición:', note);
+  }, [note]);
 
   const validateNote = () => {
     if (!text.trim()) {
@@ -35,26 +41,35 @@ const CreateNotes = ({ route, navigation }) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateNote()) return;
+    setConfirmModalVisible(false);
     setLoading(true);
 
     const observation_date = new Date().toISOString();
-    const body = { text: text.trim(), observation_date };
-    console.log('[CreateNotes] Enviando nota:', body);
+    const body = {
+      text: text.trim(),
+      observation_date,
+      color: selectedColor,
+    };
+
+    const url = note
+        ? `https://florafind-aau6a.ondigitalocean.app/plants/notes/${note.id}`
+        : `https://florafind-aau6a.ondigitalocean.app/plants/${plantId}/notes`;
+
+    const method = note ? 'PUT' : 'POST';
+
+    console.log(`[CreateNotes] Enviando ${method} a:`, url);
+    console.log('[CreateNotes] Datos enviados:', body);
 
     try {
-      const response = await fetch(
-        `https://florafind-aau6a.ondigitalocean.app/plants/${plantId}/notes`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify(body),
-        }
-      );
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
 
       const data = await response.json();
       console.log('[CreateNotes] Respuesta del backend:', data);
@@ -62,7 +77,7 @@ const CreateNotes = ({ route, navigation }) => {
       if (response.ok) {
         setModalVisible(true);
       } else {
-        throw new Error(data.detail || 'Error al crear la nota');
+        throw new Error(data.detail || 'Error al guardar la nota');
       }
     } catch (err) {
       console.error('[CreateNotes] Error:', err.message);
@@ -79,7 +94,7 @@ const CreateNotes = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nueva Nota para {plantName}</Text>
+      <Text style={styles.title}>{note ? 'Editar Nota' : `Nueva Nota para ${plantName}`}</Text>
 
       <Text style={styles.label}>Contenido de la nota</Text>
       <TextInput
@@ -96,8 +111,7 @@ const CreateNotes = ({ route, navigation }) => {
         {COLORS.map((color) => (
           <TouchableOpacity
             key={color}
-            style={[styles.colorCircle, { backgroundColor: color },
-              selectedColor === color && styles.selectedCircle]}
+            style={[styles.colorCircle, { backgroundColor: color }, selectedColor === color && styles.selectedCircle]}
             onPress={() => setSelectedColor(color)}
           />
         ))}
@@ -105,13 +119,44 @@ const CreateNotes = ({ route, navigation }) => {
 
       <TouchableOpacity
         style={[styles.submitButton, loading && { opacity: 0.7 }]}
-        onPress={handleSubmit}
+        onPress={() => {
+          if (validateNote()) setConfirmModalVisible(true);
+        }}
         disabled={loading}
       >
-        <Text style={styles.submitText}>{loading ? 'Creando...' : 'Crear nota'}</Text>
+        <Text style={styles.submitText}>{loading ? 'Guardando...' : note ? 'Guardar cambios' : 'Crear nota'}</Text>
       </TouchableOpacity>
 
       {/* Modal de confirmación */}
+      <Modal
+        visible={confirmModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="help-circle" size={64} color="#4CAF50" />
+            <Text style={styles.modalText}>¿Deseas {note ? 'guardar los cambios' : 'crear la nota'}?</Text>
+            <View style={{ flexDirection: 'row', marginTop: 16 }}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#ccc', marginRight: 10 }]}
+                onPress={() => setConfirmModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#4CAF50' }]}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.modalButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal final */}
       <Modal
         visible={modalVisible}
         transparent
@@ -121,7 +166,9 @@ const CreateNotes = ({ route, navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Ionicons name="checkmark-circle" size={64} color="#4CAF50" />
-            <Text style={styles.modalText}>Nota creada con éxito</Text>
+            <Text style={styles.modalText}>
+              {note ? 'Nota actualizada con éxito' : 'Nota creada con éxito'}
+            </Text>
             <TouchableOpacity style={styles.modalButton} onPress={closeModalAndRedirect}>
               <Text style={styles.modalButtonText}>Aceptar</Text>
             </TouchableOpacity>
