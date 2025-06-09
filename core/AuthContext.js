@@ -74,6 +74,9 @@ export const AuthProvider = ({ children }) => {
 
   // Login: guarda ambos tokens y expiraciones
   const login = async (token, expiresInSeconds, refresh, refreshExpiresInSeconds) => {
+    if (!token || !refresh) {
+      throw new Error('Credenciales inválidas');
+    }
     setAccessToken(token);
     setRefreshToken(refresh);
     const expiryTime = Date.now() + expiresInSeconds * 1000;
@@ -87,7 +90,10 @@ export const AuthProvider = ({ children }) => {
         [REFRESH_KEY, refresh],
         [REFRESH_EXPIRY_KEY, refreshExpTime.toString()],
       ]);
-    } catch {}
+    } catch (error) {
+      console.error('Error al guardar tokens:', error);
+      throw new Error('Error al guardar la sesión');
+    }
   };
 
   // Logout: limpia todo
@@ -111,26 +117,33 @@ export const AuthProvider = ({ children }) => {
     try {
       const refresh = await storage.getItem(REFRESH_KEY);
       if (!refresh) throw new Error('No refresh token');
-      // El backend espera el refresh_token como parámetro de query
-      const resp = await fetch(`${API_BASE_URL}/auth/refresh?refresh_token=${encodeURIComponent(refresh)}`, {
+      
+      const formData = new URLSearchParams();
+      formData.append('refresh_token', refresh);
+      
+      const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString()
       });
+      
       if (!resp.ok) throw new Error('Refresh token inválido');
       const data = await resp.json();
-      const expiresIn = data.expires_in || 1800;
-      const refreshExpiresIn = data.refresh_expires_in || 604800;
+      const expiresIn = data.data.expires_in || 1800;
+      const refreshExpiresIn = data.data.refresh_expires_in || 604800;
       const expiryTime = Date.now() + expiresIn * 1000;
       const refreshExpTime = Date.now() + refreshExpiresIn * 1000;
       await storage.multiSet([
-        [TOKEN_KEY, data.access_token],
+        [TOKEN_KEY, data.data.access_token],
         [EXPIRY_KEY, expiryTime.toString()],
-        [REFRESH_KEY, data.refresh_token || refresh],
+        [REFRESH_KEY, data.data.refresh_token || refresh],
         [REFRESH_EXPIRY_KEY, refreshExpTime.toString()],
       ]);
-      setAccessToken(data.access_token);
+      setAccessToken(data.data.access_token);
       setTokenExpiry(expiryTime);
-      setRefreshToken(data.refresh_token || refresh);
+      setRefreshToken(data.data.refresh_token || refresh);
       setRefreshExpiry(refreshExpTime);
       tokenEvents.emit('tokenRefreshed');
       scheduleProactiveRefresh(expiryTime);

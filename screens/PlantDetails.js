@@ -171,6 +171,21 @@ const PlantDetails = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Image source={imageUrl} style={styles.image} resizeMode="cover" />
 
+        {/* Botón de acceso a notas */}
+        <View style={styles.notesButtonContainer}>
+          <TouchableOpacity
+            style={styles.notesButton}
+            onPress={() =>
+              navigation.navigate('PlantNotes', {
+                plantId: plant.id,
+                plantName: plant.alias || 'Sin nombre',
+              })
+            }
+          >
+            <Ionicons name="document-text-outline" size={32} color="#000" />
+          </TouchableOpacity>
+        </View>
+
         {/* Info básica planta */}
         <View style={styles.card}>
           {/* Nombre */}
@@ -307,6 +322,22 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 280,
+  },
+  notesButtonContainer: {
+    position: 'absolute',
+    top: 260,
+    right: 20,
+    zIndex: 10,
+    },
+  notesButton: {
+    backgroundColor: '#F2F5A9',
+    padding: 14,
+    borderRadius: 50,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
   },
   card: {
     marginTop: 20,

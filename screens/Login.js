@@ -4,7 +4,7 @@ import CustomInput from '../components/CustomInput';
 import Checkbox from '../components/Checkbox';
 import { useNavigation } from '@react-navigation/native';
 import { useContext } from 'react';
-import { AuthContext } from '../core/AuthContext'; 
+import { AuthContext } from '../core/AuthContext';
 import { apiFetch } from '../core/api';
 
 
@@ -52,12 +52,10 @@ const Login = () => {
           password,
         }),
       });
-      const text = JSON.stringify(data);
+      
       if (!ok) {
-        const detail = Array.isArray(data?.detail)
-          ? data.detail.map(d => d.msg || JSON.stringify(d)).join('\n')
-          : text || 'Error desconocido';
-        setModalMessage(detail);
+        const errorMessage = data?.detail || 'Error al iniciar sesión';
+        setModalMessage(errorMessage);
         setModalVisible(true);
       } else {
         // Guardar ambos tokens y expiraciones
@@ -82,7 +80,7 @@ const Login = () => {
   };
 
   return (
-    <View style={[styles.container, isDark && styles.dark]}> 
+    <View style={[styles.container, isDark && styles.dark]}>
       <Text style={[styles.welcome, isDark && styles.darkWelcome]}>Bienvenido a</Text>
       <Text style={[styles.floraFind, isDark && styles.darkFloraFind]}>FloraFind</Text>
       <CustomInput
@@ -106,11 +104,6 @@ const Login = () => {
         secureText
         error={touched.password ? errors.password : ''}
       />
-
-      <View style={styles.row}>
-        <Checkbox checked={remember} onToggle={() => setRemember(r => !r)} />
-        <Text style={[styles.rememberText, isDark && styles.darkRememberText]}>Recordar contraseña</Text>
-      </View>
 
       <TouchableOpacity onPress={() => navigation.navigate('PasswordRecovery')} style={{ alignSelf: 'flex-start' }}>
         <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
