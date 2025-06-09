@@ -61,12 +61,17 @@ const Login = () => {
         setModalVisible(true);
       } else {
         // Guardar ambos tokens y expiraciones
+        console.log("DATA: ",data);
+        console.log('accessToken:', data.data.access_token);
         await login(
-          data.access_token,
-          data.expires_in || 1800,
-          data.refresh_token,
-          data.refresh_expires_in || 604800
+          data.data.access_token,
+          data.data.expires_in || 1800,
+          data.data.refresh_token,
+          data.data.refresh_expires_in || 604800
         );
+        console.log('accessToken:', accessToken);
+       //navigation.navigate('Home', { screen: 'Inicio' });
+
       }
     } catch (e) {
       setModalMessage('Error de red, inténtalo más tarde.');

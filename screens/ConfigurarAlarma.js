@@ -32,11 +32,12 @@ const reminderTypes = [
 const ConfigurarAlarma = ({ route, navigation }) => {
   console.log('AlarmModule:', AlarmModule);
   console.log('Platform.OS:', Platform.OS);
-
+  
   const { garden, plant } = route.params;
   const gardens = Array.isArray(garden) ? garden : garden ? [garden] : [];
   const plants = Array.isArray(plant) ? plant : plant ? [plant] : [];
-
+  console.log('planta', plant);
+  console.log('garden', gardens);
   const getNextHour = () => {
     const now = new Date();
     let nextHour = now.getHours() + 1;

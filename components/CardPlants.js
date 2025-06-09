@@ -1,7 +1,7 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const CardPlants = ({ imageUri, name, scientificName, plantProps }) => {
+const CardPlants = ({ imageUri, name, scientificName, plantProps, gardenName }) => {
   const navigation = useNavigation();
 
   const defaultImgPlant = require('../assets/defaultPlant.png');
@@ -9,7 +9,7 @@ const CardPlants = ({ imageUri, name, scientificName, plantProps }) => {
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.85}
-      onPress={() => navigation.navigate('PlantDetails', { plant: plantProps })}
+      onPress={() => navigation.navigate('PlantDetails', { plant: plantProps, gardenName })} // Navegar a PlantDetails con las props de la planta y el nombre del jardín
     >
       <Image
         source={imageUri ? { uri: imageUri } : defaultImgPlant} // Imagen predeterminada si no existe URL

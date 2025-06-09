@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+
 import { useAuth } from '../core/AuthContext';
 import { useFetch } from '../hooks/useFetch';
 import { useNavigation } from '@react-navigation/native';
@@ -30,13 +30,7 @@ const Home = () => {
       <Text style={[styles.titleBlack, isDark && { color: '#fff' }]}>Bienvenido a </Text>
       <Text style={[styles.titleGreen, isDark && { color: '#aed581' }]}>FloraFind</Text>
       <Text style={[styles.subtitle, isDark && { color: '#bbb' }]}>Gestiona tus jardines, plantas y recordatorios de riego fácilmente.</Text>
-      <TouchableOpacity
-        style={styles.alarmButton}
-        onPress={() => navigation.navigate('Alarms')}
-      >
-        <Ionicons name="alarm-outline" size={28} color="#4CAF50" style={{ marginRight: 10 }} />
-        <Text style={styles.alarmButtonText}>Crear alarmas</Text>
-      </TouchableOpacity>
+      
     </View>
   );
 };
@@ -64,20 +58,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
-  alarmButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e7f6e9',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginTop: 16,
-  },
-  alarmButtonText: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
+  
 });
 
 export default Home;

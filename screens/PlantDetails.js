@@ -1,4 +1,4 @@
-// PlantDetails.js (completo con mejoras para manejo de error estético)
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -18,11 +18,13 @@ const defaultImgPlant = require('../assets/defaultPlant.png');
 
 const PlantDetails = ({ route, navigation }) => {
   const { plant: plantParam } = route.params;
+  const { gardenName } = route.params;
   const { accessToken } = useAuth();
-
+  
   const [plant, setPlant] = useState(plantParam);
   const [loadingDelete, setLoadingDelete] = useState(false);
-
+  
+  
   // Estado para la info de Wikipedia
   const [wikiData, setWikiData] = useState(null);
   const [loadingWiki, setLoadingWiki] = useState(true);
@@ -49,7 +51,7 @@ const PlantDetails = ({ route, navigation }) => {
           },
         }
       );
-
+      console.log('plant', plant);
       if (!response.ok) {
         if (response.status === 404) {
           // Caso planta no encontrada: mensaje amigable
@@ -81,7 +83,6 @@ const PlantDetails = ({ route, navigation }) => {
       setLoadingWiki(false);
     }
   }, [plant.scientific_name_without_author, accessToken]);
-
   useEffect(() => {
     fetchWikipediaData();
   }, [fetchWikipediaData]);
@@ -148,6 +149,24 @@ const PlantDetails = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={28} color="#4CAF50" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{plant.alias || 'Detalle de Planta'}</Text>
+        {/* Botón de alarma */}
+        <TouchableOpacity
+            onPress={async () => {
+                
+                navigation.navigate('GestionAlarmas', {
+                  plant: { id: plant.id, alias: plant.alias },
+                  garden: { id: plant.garden_id, name: gardenName },
+                });
+             
+            }}
+            style={styles.alarmButton}
+          >
+          <Image
+            source={require('../assets/alarm.png')} 
+            style={styles.alarmIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -354,6 +373,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  alarmButton: {
+    position: 'absolute',
+    right: 16,
+    top: 10,
+    padding: 0,
+  },
+
+  alarmIcon: {
+    width: 40,
+    height: 40,
   },
 });
 

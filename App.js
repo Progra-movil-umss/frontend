@@ -4,10 +4,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Image, View, useColorScheme, Text, Platform } from 'react-native';
-import { AuthProvider, AuthContext } from './core/AuthContext';
+import { AuthProvider, AuthContext, useAuth } from './core/AuthContext';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
+
 
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -23,7 +24,9 @@ import ResultPlantIdentify from './screens/ResultPlantIdentify';
 import Alarms from './screens/Alarms';
 import PlantasDelJardin from './screens/PlantasDelJardin';
 import ConfigurarAlarma from './screens/ConfigurarAlarma';
-
+import GestionAlarmas from './screens/GestionAlarmas';
+import NotificationsScreen from './screens/NotificationsScreen';
+import DetalleAlarmaScreen from './screens/DetalleAlarma';
 
 
 // Recuperación de contraseña
@@ -36,6 +39,8 @@ import AddPlant from './screens/AddPlant';
 
 // Perfil de usuario
 import EditProfile from './screens/EditProfile';
+import GestionarAlarmas from './screens/GestionAlarmas';
+import AgregarAlarmaManual from './screens/AgregarAlarmaManual';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -49,24 +54,31 @@ function HomeTabs() {
           else if (route.name === 'Identificar') iconSource = require('./assets/search.png');
           else if (route.name === 'Jardín') iconSource = require('./assets/garden.png');
           else if (route.name === 'Perfil') iconSource = require('./assets/profile.png');
+          else if (route.name === 'Notificaciones') iconSource = require('./assets/notifications.png');
           return <Image source={iconSource} style={{ width: size, height: size, tintColor: color }} />;
         },
         tabBarActiveTintColor: '#4CAF50',
         tabBarInactiveTintColor: 'gray',
         headerShown: false, // OCULTAR HEADER EN TODAS LAS TABS PRINCIPALES
+       
+        
       })}
     >
       <Tab.Screen name="Inicio" component={Home} />
       <Tab.Screen name="Identificar" component={Identify} />
       <Tab.Screen name="Jardín" component={Gardens} />
+      <Tab.Screen name="Notificaciones" component={NotificationsScreen} options= {{tabBarLabelStyle: { fontSize: 9, marginBottom: 4,}, tabBarIconStyle: { marginBottom: 1,  }, tabBarItemStyle: { paddingTop: 2, },}} />
       <Tab.Screen name="Perfil" component={Profile} />
+      
     </Tab.Navigator>
   );
 }
 
 function AppContent() {
   const colorScheme = useColorScheme();
-  const { loading, accessToken } = useContext(AuthContext);
+  const { loading, accessToken } = useAuth();
+  console.log(accessToken);
+  console.log(loading)
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#111' : '#fff', justifyContent: 'center', alignItems: 'center' }}>
@@ -109,10 +121,15 @@ function AppContent() {
 
             <Stack.Screen name="EditPlant" component={EditPlant} />
             <Stack.Screen name="EditProfile" component={EditProfile} options={{ title: 'Editar Perfil' }} />
+          
+            <Stack.Screen name="GestionAlarmas" component={GestionarAlarmas} />
+            <Stack.Screen name="AgregarAlarmaManual" component={AgregarAlarmaManual} />
 
-            
-
-
+            <Stack.Screen
+              name="DetalleAlarma"
+              component={DetalleAlarmaScreen}
+              options={{ title: '' }}
+            />
 
           </>
         )}
